@@ -1,0 +1,81 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Contactos{% endblock %}
+{% block bloque %}
+    <div class="container">
+        <form method="GET" action="{% url 'contacto' %}">
+            <div class="row g-3 align-items-center">
+              <div class="col-md-4">
+                <label class="form-label" for="nombre">Nombre:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="nombre" value="{{ request.GET.nombre }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="emp">Empresa:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="emp" value="{{ request.GET.emp }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="tel">Telefono:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="tel" value="{{ request.GET.tel }}">
+                </div>
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label" for="mail">Mail:</label>
+                    <div class="input-group">
+                        <input class="form-control" type="text" name="mail" value="{{ request.GET.mail }}">
+                    </div>
+                    </div>
+            <div class="col-md-4 mt-3">
+                <div class="">
+                  <button class="btn btn-primary ml-auto" type="submit">Filtrar</button>
+                </div>
+              </div>
+            </div>
+        </form>
+
+        <h1 class="mt-5">CONTACTOS</h1>
+        {% for empresa, contactos in contactos_by_empresa.items %}
+            {% if user.empresa == empresa or user.is_superuser %}
+                <h2>{{ empresa }}</h2>
+                <div class="table-responsive mt-3">
+                    <table class="table">
+                        <thead class="bg-light">
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Mail</th>
+                                <th scope="col">Telefono</th>
+                                {% if user.empresa_admin or admin_perm %}
+                                    <th scope="col"></th>
+                                    <th scope="col"></th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for contacto in contactos %}
+                                <tr>
+                                    <th scope="row">{{ contacto.nombre }}</th>
+                                    <td>{{ contacto.mail }}</td>
+                                    <td>{{ contacto.telefono }}</td>
+                                    {% if admin_perm %}
+                                        <td>
+                                            <a class="btn btn-danger btn-sm" href="{% url 'borrarContacto' contacto.id %}">Eliminar</a>
+                                        </td>
+                                        <td>
+                                            <a class="btn btn-success btn-sm" href="{% url 'editarContacto' contacto.id %}">Editar</a>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            {% endif %}
+            {% endfor %}
+        {% if admin_perm %}
+            <a href="{% url 'ContactoForm' %}" type="button" class="btn btn-primary mt-2">Agregar contacto</a>
+        {% endif %}
+    </div>
+{% endblock %}

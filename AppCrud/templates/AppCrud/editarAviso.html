@@ -1,0 +1,6 @@
+{% extends "AppCrud/formularios.html" %}
+{% block titulo %} <h1 class="text-center">Editar Aviso</h1> {% endblock %}
+{% block formulario %} 
+    {% csrf_token %}
+    {{ formulario.as_p }}
+{% endblock %}

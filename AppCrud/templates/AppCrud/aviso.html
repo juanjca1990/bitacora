@@ -1,0 +1,58 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Avisos{% endblock %}
+{% block bloque %}
+    <div class="container mt-5">
+        <h1 class="mt-5">LISTA AVISOS</h1>
+        <div class="table-responsive mt-3">
+            <table class="table table-bordered table-striped custom-table">
+                <thead class="bg-light">
+                    <tr>
+                        <th scope="col">Empresa</th>
+                        <th scope="col">Ambiente</th>
+                        <th scope="col">Hora Inicio</th>
+                        <th scope="col">Job</th>
+                        <th scope="col">Contacto</th>
+                        {% if user.empresa_admin or admin_perm %}
+                            <th scope="col"></th>
+                            <th scope="col"></th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aviso in avisos %}
+                        {% if user.empresa == aviso.empresa or user.is_superuser %}
+                            <tr>
+                                <th scope="row">{{ aviso.empresa }}</th>
+                                <td>{{ aviso.ambiente }}</td>
+                                <td>{{ aviso.inicio }}</td>
+                                <td>{{ aviso.job }}</td>
+                                <td>{{ aviso.contacto }}</td>
+                                {% if admin_perm %}
+                                    <td>
+                                        <a class="btn btn-danger btn-sm" href="{% url 'borrarAviso' aviso.id %}">Eliminar</a>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-success btn-sm" href="{% url 'editarAviso' aviso.id %}">Editar</a>
+                                    </td>
+                                {% endif %}
+                            </tr>
+                        {% endif %}
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if admin_perm %}
+            <a href="{% url 'AvisoForm' %}" type="button" class="btn btn-primary mt-2">Agregar aviso</a>
+        {% endif %}
+    </div>
+    <style>
+        /* Custom table styles */
+        .custom-table tbody tr:nth-child(odd) {
+            background-color: #f8f9fa;
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+    </style>
+{% endblock %}

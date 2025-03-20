@@ -1,0 +1,141 @@
+{% extends "AppCrud/padre.html" %}
+
+{% block title %}Jobs{% endblock %}
+
+{% block bloque %}
+    <div class="container mt-5">
+        <form method="GET" action="{% url 'job' %}">
+            <div class="row g-3 align-items-center">
+              <div class="col-md-4">
+                <label class="form-label" for="nombre">Nombre:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="nombre" value="{{ request.GET.nombre }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="emp">Empresa:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="emp" value="{{ request.GET.emp }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="ambiente">Ambiente:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="ambiente" value="{{ request.GET.ambiente }}">
+                </div>
+                </div>
+            <div class="col-md-4 mt-3">
+                <div class="">
+                  <button class="btn btn-primary ml-auto" type="submit">Filtrar</button>
+                </div>
+              </div>
+            </div>
+        </form>
+
+
+
+        <h1 class="mt-5">JOBS</h1>
+        {% for empresa, jobs in paginated_jobs.items %}
+            {% if user.empresa == empresa or user.is_superuser %}
+                <h2>{{ empresa }}</h2>
+                <div class="table-responsive mt-3">
+                    <table class="table table-bordered table-striped custom-table">
+                        <thead class="bg-light">
+                            <tr>
+                                <th scope="col">Nombre</th>
+                                <th scope="col">Empresa</th>
+                                <th scope="col">Ambiente</th>
+                                <th scope="col">Descripción</th>
+                                {% if admin_perm %}
+                                    <th scope="col"></th>
+                                    <th scope="col"></th>
+                                {% endif %}
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for job in jobs %}
+                                {% if job.empresa == empresa %}
+                                    <tr>
+                                        <th scope="row">{{ job.nombre }}</th>
+                                        <td>{{ job.empresa }}</td>
+                                        <td>{{ job.ambiente }}</td>
+                                        <td>{{ job.descripcion }}</td>
+                                        {% if admin_perm %}
+                                            <td>
+                                                <a class="btn btn-danger btn-sm" href="{% url 'borrarJob' job.id %}">Eliminar</a>
+                                            </td>
+                                            <td>
+                                                <a class="btn btn-success btn-sm" href="{% url 'editarJob' job.id %}">Editar</a>
+                                            </td>
+                                        {% endif %}
+                                    </tr>
+                                {% endif %}
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                    {% if jobs.has_other_pages %}
+                        <div class="pagination">
+                            {% if jobs.has_previous %}
+                                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}=1{% endif %}">&laquo;</a>
+                                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.previous_page_number }}{% endif %}">&lsaquo;</a>
+                            {% endif %}
+                            {% with counter=forloop.counter %}
+                                {% for num in jobs.paginator.page_range %}
+                                    {% if jobs.number == num %}
+                                        <span class="current-page">{{ num }}</span>
+                                    {% elif num > jobs.number|add:'-3' and num < jobs.number|add:'3' %}
+                                        <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{counter}}={{ num }}{% endif %}">{{ num }}</a>
+                                    {% endif %}
+                                {% endfor %}
+                            {% endwith %}
+                            {% if jobs.has_next %}
+                                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.next_page_number }}{% endif %}">&rsaquo;</a>
+                                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.paginator.num_pages }}{% endif %}">&raquo;</a>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            {% endif %}
+        {% endfor %}
+        {% if admin_perm %}
+            <a href="{% url 'JobForm' %}" type="button" class="btn btn-primary mt-2">Agregar job</a>
+        {% endif %}
+    </div>
+    <style>
+        /* Custom table styles */
+        
+        tr  th{
+            background-color: {{ user.empresa.visual_empresa.colorPrimario }};
+        }
+        .custom-table tbody tr:nth-child(odd) {
+            background-color: #f8f9fa;
+            color: black
+        }
+        th{
+            color:white
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        .pagination a {
+          color: #333;
+          text-decoration: none;
+          padding: 0.5rem;
+          border-radius: 3px;
+          background-color: #fff;
+          border: 1px solid #ddd;
+          margin-right: 0.5rem;
+        }
+
+        .pagination .current-page {
+          display: inline-block;
+          padding: 0.5rem;
+          margin: 0 5px;
+          background-color: {{ user.empresa.visual_empresa.colorPrimario }};
+          color: white;
+          border-radius: 3px;
+        }
+
+    </style>
+{% endblock %}

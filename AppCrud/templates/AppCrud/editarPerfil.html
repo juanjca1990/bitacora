@@ -1,0 +1,21 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Edicion Usuario{% endblock %}
+
+{% block bloque %}
+    <h1 class="mb-5">EDITANDO USUARIO: {{ nombreusuario }} </h1>
+
+    <h3>{{ mensaje }}</h3>
+
+    <form action="{% url 'EditarPerfil'  %}" method="POST"> {% csrf_token %}
+
+        <table>
+        
+            {{ form.as_table }}
+        
+        </table>
+        
+        <input type="submit" value="MODIFICAR USUARIO">
+        
+        
+     </form>
+{% endblock %}
