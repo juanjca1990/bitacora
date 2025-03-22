@@ -1,7 +1,7 @@
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from AppCrud.models import Job, Contacto, Aviso, Bitacora, Empresa, User, VisualEmpresa
-from AppCrud.forms import JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, RegistroUsuarioForm, UserEditForm, EmpresaVisualForm
+from AppCrud.models import Job, Contacto, Aviso, Bitacora, Empresa, RegistroMonitor, Servidor, User, VisualEmpresa
+from AppCrud.forms import JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, RegistroMonitorForm, RegistroUsuarioForm, ServidorForm, UserEditForm, EmpresaVisualForm
 
 from django.core.paginator import Paginator
 
@@ -668,3 +668,72 @@ def obtener_mails_y_nombres(job):
             emails.append(contacto.mail)
             nombres.append(contacto.nombre)
     return(emails, nombres)
+
+
+def servidor(request):
+    usuario = request.user
+    empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
+    servidores = Servidor.objects.all()
+    return render(request, "AppCrud/ABMservidor.html", {"servidores": servidores, "usuario":usuario , 'empresa':empresa})
+    # return render(request, "AppCrud/ABMservidor.html", {"servidores": servidores, "admin_perm": usuario.has_perm('AppCrud.empresa_admin')})
+    
+def registro(request):
+    usuario = request.user
+    empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
+    registros = RegistroMonitor.objects.all()
+    return render(request, "AppCrud/ABMregistro.html", {"registros": registros, "usuario":usuario ,  'empresa':empresa})
+
+def altaServidor(request, empresa_id):
+    usuario = request.user
+    empresa = Empresa.objects.get(id=empresa_id)
+    print ("Empresa")
+    print(empresa)
+    if request.method == "POST":
+        form = ServidorForm(request.POST)
+        if form.is_valid():
+            form.instance.nombre = request.POST['nombre']  # Asigna nombre del formulario
+            form.instance.empresa = empresa 
+            form.save()
+            return redirect('servidor')  # Asegúrate de tener esta vista creada
+    else:
+        form = ServidorForm()
+    return render(request, "AppCrud/altaServidor.html", {"empresa": empresa, "usuario":usuario , "form":form})
+
+def eliminarServidor(request, empresa_id, servidor_id):
+    usuario = request.user
+    servidor = Servidor.objects.get(id=servidor_id , empresa_id=empresa_id)
+    servidor.delete()
+    return redirect('servidor')
+
+
+def altaRegistroMonitor(request, empresa_id):
+    usuario = request.user
+    empresa = Empresa.objects.get(id=empresa_id)
+    if request.method == "POST":
+        form = RegistroMonitorForm(request.POST)
+        if form.is_valid():
+            form.instance.nombre = request.POST['nombre']
+            form.instance.descripcion = request.POST['descripcion']
+            form.instance.empresa = empresa 
+            servidor = request.POST['servidor']
+            form.instance.servidor = Servidor.objects.get(id=servidor)
+            form.save()
+            return redirect('registro')  # Asegúrate de tener esta vista creada
+    else:
+        form = RegistroMonitorForm()
+    return render(request, "AppCrud/altaRegistroMonitor.html", {"empresa": empresa, "usuario":usuario , "form":form})
+
+
+def eliminarRegistroMonitor(request, empresa_id, registro_id):
+    usuario = request.user
+    registro = RegistroMonitor.objects.get(id=registro_id , empresa_id=empresa_id)
+    registro.delete()
+    return redirect('registro')
+
+
+def monitoreo(request):
+    usuario = request.user
+    empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
+    servidores = Servidor.objects.all()
+    servidores_propios = Servidor.objects.filter(empresa=empresa)
+    return render(request, "AppCrud/monitoreo.html", {"empresa": empresa, "usuario":usuario , "servidores":servidores, "servidores_propios":servidores_propios})

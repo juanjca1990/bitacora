@@ -1,0 +1,32 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Bitacora{% endblock %}
+{% block bloque %}
+
+
+<div class="container mt-5">
+    <h2>Registro Monitor</h2>
+</div>
+<button><a href="{% url 'altaRegistroMonitor' empresa.id %}">Crear Registro Monitor</a></button>
+<div class="table-responsive mt-3">
+    <table class="table table-bordered table-striped custom-table">
+        <thead class="bg-light">
+            <tr>
+                <th scope="col">nombre</th>
+                <th scope="col">descripcion</th>
+                <th scope="col">servidor</th>
+                <th scope="col">accion</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for registro in registros %}
+                <tr>
+                    <td scope="row">{{registro.nombre}}</td>
+                    <td scope="row">{{registro.descripcion}}</td>
+                    <td scope="row">{{registro.servidor}}</td>
+                    <td scope="row"><button><a href="{% url 'eliminarRegistroMonitor' empresa.id registro.id %}">eliminar</a></button></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

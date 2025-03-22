@@ -1,0 +1,14 @@
+
+{% extends "AppCrud/formularios.html" %}
+{% block titulo %} <h1 class="text-center">Alta Registro Monitor</h1> {% endblock %}
+{% block formulario %} 
+<body>
+    <div class="container mt-5">
+        <form method="post" action="{% url 'altaRegistroMonitor' empresa.pk %}">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit">Guardar</button>
+        </form>
+    </div>
+</body>
+{% endblock %}

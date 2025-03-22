@@ -2,7 +2,7 @@ from django import forms
 from AppCrud.models import Contacto, Job, User, Empresa
 from django.contrib.auth.forms import  UserCreationForm
 from django.forms import ModelForm, formsets
-from .models import Empresa, VisualEmpresa, Contacto, Job
+from .models import Empresa, RegistroMonitor, Servidor, VisualEmpresa, Contacto, Job
 
 class JobForm(forms.Form):
     empresa = forms.ModelChoiceField(queryset=Empresa.objects.none(), label="Empresa", to_field_name="nombre",
@@ -177,4 +177,20 @@ class EmailForm(forms.Form):
     asunto = forms.CharField(label="Asunto", widget=forms.TextInput(attrs={'class': 'form-control'}))
     mensaje = forms.CharField(label="Mensaje", widget=forms.Textarea(attrs={'class': 'form-control'}))
 
+
+class ServidorForm(forms.ModelForm):
+    class Meta:
+        model = Servidor
+        fields = ['nombre']
+
+class RegistroMonitorForm(forms.ModelForm):
+    servidor = forms.ModelChoiceField(
+        queryset=Servidor.objects.all(),
+        empty_label="Seleccione un servidor",
+        widget=forms.Select(attrs={'class': 'form-control'})  # Añadir estilos si es necesario
+    )
+
+    class Meta:
+        model = RegistroMonitor
+        fields = ['nombre', 'descripcion', 'servidor']
     

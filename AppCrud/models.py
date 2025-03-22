@@ -16,6 +16,23 @@ class Empresa(models.Model):
     visual_empresa = models.ForeignKey(VisualEmpresa, on_delete=models.CASCADE)
     def __str__(self) -> str:
         return self.nombre
+    
+    
+class Servidor(models.Model):
+    nombre = models.CharField(max_length=100)
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="servidores")
+
+    def __str__(self):
+        return f"{self.nombre} - {self.empresa.nombre}"
+
+class RegistroMonitor(models.Model):
+    nombre = models.CharField(max_length=100)
+    descripcion = models.TextField()
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="registros_monitoreo")
+    servidor = models.ForeignKey(Servidor, on_delete=models.CASCADE, related_name="registros")
+
+    def __str__(self):
+        return f"{self.nombre} - {self.empresa.nombre} - {self.servidor.nombre}"
 
 class User(AbstractUser):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
@@ -64,4 +81,6 @@ class Bitacora(models.Model):
     descripcion = models.CharField(max_length=40)
     def __str__(self) -> str:
         return self.inicio
+    
+    
     

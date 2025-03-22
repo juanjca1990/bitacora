@@ -40,5 +40,14 @@ urlpatterns = [
     path('get_job_description/', get_job_description, name='get_job_description'),
 
     path('avisar/<id>', avisar, name='avisar'),
-
+    
+    path('registro/', registro, name='registro'),
+    path('servidor/', servidor, name='servidor'),
+    path('altaServidor/<int:empresa_id>', altaServidor, name='altaServidor'),
+    path('eliminarServidor/<int:empresa_id> ,<int:servidor_id>', eliminarServidor, name='eliminarServidor'),
+    
+    path('altaRegistroMonitor/<int:empresa_id>', altaRegistroMonitor, name='altaRegistroMonitor'),
+    path('eliminarRegistroMonitor/<int:empresa_id>,<int:registro_id>', eliminarRegistroMonitor, name='eliminarRegistroMonitor'),
+    
+    path('monitoreo/', monitoreo, name='monitoreo'),
 ]

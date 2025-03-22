@@ -34,6 +34,15 @@
                 <ul class="navbar-nav ml-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
+                            <a class="nav-link" href="{% url 'monitoreo' %}">monitoreo</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'registro' %}">ABM registros</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{% url 'servidor' %}">ABM servidor</a>
+                        </li>
+                        <li class="nav-item">
                             <a class="nav-link" href="{% url 'bitacora' %}">Bitacoras</a>
                         </li>
                         <li class="nav-item">

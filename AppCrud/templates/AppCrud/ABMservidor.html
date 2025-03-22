@@ -1,0 +1,28 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Bitacora{% endblock %}
+{% block bloque %}
+
+
+<div class="container mt-5">
+    <h2>Servidor</h2>
+</div>
+<button><a href="{% url 'altaServidor' empresa.id %}">Crear Servidor</a></button>
+<div class="table-responsive mt-3">
+    <table class="table table-bordered table-striped custom-table">
+        <thead class="bg-light">
+            <tr>
+                <th scope="col" >nombre</th>
+                <th scope="col" >accion</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for servidor in servidores %}
+                <tr>
+                    <td scope="row">{{servidor.nombre}}</td>
+                    <td scope="row"><button><a href="{% url 'eliminarServidor' empresa.id servidor.id %}">eliminar</a></button></td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
