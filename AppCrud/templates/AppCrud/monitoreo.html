@@ -5,6 +5,7 @@
     <title>Tabla de Estados</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
+        /* ESTILO PARA TABLA Y EDICION DE REGISTROS */
         table { border-collapse: collapse; width: 100%; }
         th, td { border: 1px solid black; padding: 8px; text-align: center; cursor: pointer; }
         .icono-verde { color: green; }
@@ -92,23 +93,52 @@
             background-color: blue;
             color: white;
         }
+
+        /* ESTILO PARA INDICAR DIAS NO MODIFICABLES*/
+        .dia-no-modificable {
+            background-color: orange !important; /* Fondo naranja */
+            color: white; /* Texto en blanco para contraste */
+            font-weight: bold;
+        }
+        .fin-de-semana {
+            background-color: #e0e0e0;  /* Color gris */
+            color: gray;
+        }
+        .nav-meses {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .nav-meses a {
+            text-decoration: none;
+            padding: 8px 12px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 5px;
+        }
+
         
     </style>
 </head>
 {% load custom_filters %}
 <div>
+    <div class="nav-meses">
+        <a href="?mes={{ mes_anterior }}&anio={{ anio_anterior }}">← Mes Anterior</a>
+        <h3>{{ mes }}/{{ anio }}</h3>
+        <a href="?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}">Mes Siguiente →</a>
+    </div>
     <table>
         <thead>
             <tr>
-                <th>Registro</th>
-                {% for dia in dias_mes %}
-                    <th class="{% if dia.es_fin_de_semana %}fin-de-semana{% endif %}">{{ dia.fecha.day }}</th>
+                <th></th>
+                {% for dia in dias_semana %}
+                    <th>{{ dia }}</th>
                 {% endfor %}
             </tr>
             <tr>
-                <th></th>
+                <th>Registro</th>
                 {% for dia in dias_mes %}
-                    <th class="{% if dia.es_fin_de_semana %}fin-de-semana{% endif %}">{{ dia.nombre_dia }}</th>
+                    <th>{{ dia.day }}</th>
                 {% endfor %}
             </tr>
         </thead>
@@ -117,7 +147,13 @@
             <tr>
                 <td>{{ fila.registro.nombre }}</td>
                 {% for estado in fila.estados %}
-                    <td>
+                <td>
+                    {# Icon container: Si es fin de semana, le agregamos un fondo naranja y no agregamos el onclick #}
+                    {% if dias_no_modificables|index:forloop.counter0 %}
+                        <div class="icon-container" style="background-color: orange;">
+                            <i></i>
+                        </div>
+                    {% else %}
                         <div class="icon-container" onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_mes|index:forloop.counter0 }}')">
                             <i class="fas 
                                 {% if estado %} 
@@ -127,19 +163,23 @@
                                     {% elif estado.tipo_verificacion == 'no_verificado' %}fa-exclamation-circle icono-amarillo
                                     {% endif %}
                                 {% else %}
-                                    {% if estado.tipo_verificacion is none %}
-                                        fa-circle icono-vacio
+                                    {% if estado.tipo_verificacion is none %} 
+                                        fa-circle icono-vacio 
                                     {% endif %}
                                 {% endif %}
                             "></i>
-                            <!-- Botón para abrir modal de descripción -->
                         </div>
+                    {% endif %}
+                
+                    {# Opciones de modificación: solo se muestran si no es fin de semana #}
+                    {% if not dias_no_modificables|index:forloop.counter0 %}
                         <div>
                             <button class="descripcion-btn {% if estado.descripcion %}descripcion-btn-azul{% endif %}" 
                                     onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', '{{ estado.id }}', '{{ estado.descripcion|default:'' }}')">
                             </button>
                         </div>
-                    </td>
+                    {% endif %}
+                </td>
                 {% endfor %}
             </tr>
             {% endfor %}
@@ -182,6 +222,9 @@
     
         // Convertir la fecha al formato YYYY-MM-DD si es necesario
         let fechaObj = new Date(fecha);
+        if (isNaN(fechaObj.getTime())) {
+            fechaObj = new Date(parseInt(fecha));
+        }
         let fechaFormateada = fechaObj.toISOString().split("T")[0];
     
         fetch("/AppCrud/registrarEstado/", {
