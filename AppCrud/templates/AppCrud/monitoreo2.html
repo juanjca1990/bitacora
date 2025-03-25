@@ -1,0 +1,76 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Monitoreo{% endblock %}
+
+<head>
+    <title>Tabla de Estados</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid black; padding: 8px; text-align: center; }
+        .icono-verde { color: green; }
+        .icono-rojo { color: red; }
+        .icono-amarillo { color: orange; }
+    </style>
+</head>
+{% block bloque %}
+    {% load custom_filters %}
+    <div>
+        <th>Registro</th>
+        <table border="1">
+            <thead>
+                <tr>
+                    <th>Registro</th>
+                    {% for dia in dias_del_mes %}
+                        <th>{{ dia|date:'Y-m-d' }}</th>
+                    {% endfor %}
+                    <!-- {% for dia in dias_del_mes %}
+                        <th>{{ dia.day }}</th>
+                    {% endfor %} -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for fila in data %}
+                    <tr>
+                        <td>{{ fila.registro.nombre }}</td>
+                        {% for estado in fila.estados %}
+                            <td class="{% if estado.tipo_verificacion %}
+                                        {% if estado.tipo_verificacion == 'bien' %}
+                                            bien
+                                        {% elif estado.tipo_verificacion == 'fallo' %}
+                                            fallo
+                                        {% elif estado.tipo_verificacion == 'no verificado' %}
+                                            no-verificado
+                                        {% endif %}
+                                    {% endif %}">
+                                {% if estado %}
+                                    <!-- {{ estado.tipo_verificacion }} -->
+                                    {% if estado.tipo_verificacion == 'bien' %}
+                                    <i class="fas fa-check-circle icono-verde"></i>
+                                    {% elif estado.tipo_verificacion == 'fallo' %}
+                                        <i class="fas fa-times-circle icono-rojo"></i>
+                                    {% elif estado.tipo_verificacion == 'no_verificado' %}
+                                        <i class="fas fa-exclamation-circle icono-amarillo"></i>
+                                    {% endif %}
+                                {% else %}
+                                    <form method="post" action="{% url 'registrarEstado' %}">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="registro_id" value="{{ fila.registro.id }}">
+                                        <input type="hidden" name="fecha" value="{{ dia|date:'Y-m-d' }}"> <!-- Fecha correctamente pasada -->
+                                        <select name="tipo_verificacion">
+                                            <option value=""></option>
+                                            <option value="bien">Bien</option>
+                                            <option value="fallo">Fallo</option>
+                                            <option value="no verificado">No Verificado</option>
+                                        </select>
+                                        <input type="text" name="descripcion" placeholder="Descripción">
+                                        <button type="submit">Guardar</button>
+                                    </form>
+                                {% endif %}
+                            </td>
+                        {% endfor %}
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% endblock %}

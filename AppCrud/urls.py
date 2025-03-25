@@ -1,4 +1,5 @@
 from django.urls import path
+from AppCrud import views
 from AppCrud.views import *
 from django.contrib.auth.views import LogoutView
  
@@ -50,4 +51,6 @@ urlpatterns = [
     path('eliminarRegistroMonitor/<int:empresa_id>,<int:registro_id>', eliminarRegistroMonitor, name='eliminarRegistroMonitor'),
     
     path('monitoreo/', monitoreo, name='monitoreo'),
+    path('registrarEstado/', views.registrarEstado, name='registrarEstado'),
+    path('registrarDescripcion/', views.registrarDescripcion, name='registrarDescripcion'),
 ]
