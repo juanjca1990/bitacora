@@ -1,6 +1,6 @@
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from AppCrud.models import Job, Contacto, Aviso, Bitacora, Empresa, RegistroMonitor, Servidor, User, VisualEmpresa
+from AppCrud.models import Estado, Job, Contacto, Aviso, Bitacora, Empresa, RegistroMonitor, Servidor, User, VisualEmpresa
 from AppCrud.forms import JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, RegistroMonitorForm, RegistroUsuarioForm, ServidorForm, UserEditForm, EmpresaVisualForm
 
 from django.core.paginator import Paginator
@@ -12,6 +12,13 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render
 from django.db.models import Q
+import datetime
+from django.utils.timezone import now
+from django.utils.timezone import make_aware
+from django.views.decorators.csrf import csrf_exempt
+from datetime import datetime, timedelta
+from django.shortcuts import get_object_or_404
+import json
 
 
 def inicio(request):
@@ -729,11 +736,114 @@ def eliminarRegistroMonitor(request, empresa_id, registro_id):
     registro = RegistroMonitor.objects.get(id=registro_id , empresa_id=empresa_id)
     registro.delete()
     return redirect('registro')
-
+   
 
 def monitoreo(request):
+    
     usuario = request.user
     empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
     servidores = Servidor.objects.all()
     servidores_propios = Servidor.objects.filter(empresa=empresa)
-    return render(request, "AppCrud/monitoreo.html", {"empresa": empresa, "usuario":usuario , "servidores":servidores, "servidores_propios":servidores_propios})
+    
+    hoy = now().date()
+    primer_dia = hoy.replace(day=1)
+    ultimo_dia = (primer_dia.replace(month=primer_dia.month + 1, day=1) - timedelta(days=1))
+
+    registros = RegistroMonitor.objects.all()
+    dias_mes = [primer_dia + timedelta(days=i) for i in range((ultimo_dia - primer_dia).days + 1)]
+    
+    tabla_datos = []
+    
+    for registro in registros:
+        estados = {estado.fecha: estado for estado in Estado.objects.filter(registro_verificado=registro, fecha__range=(primer_dia, ultimo_dia))}
+        fila = {
+            "registro": registro,
+            "estados": [estados.get(dia, None) for dia in dias_mes]
+        }
+        tabla_datos.append(fila)
+
+    print("Días del mes:", dias_mes)
+    print("Registros:", registros)
+    print("Tabla de datos:", tabla_datos)
+
+    return render(request, "AppCrud/monitoreo.html", {
+        "tabla_datos": tabla_datos,
+        "dias_mes": dias_mes,
+    })
+        
+# guarda el estado cuando cambiar menos la descripcion
+def registrarEstado(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)  # Cargar los datos JSON enviados desde fetch
+            registro_id = data.get("registro_id")
+            fecha = data.get("fecha")
+            verificacion = data.get("tipo_verificacion")
+            # descripcion = data.get("descripcion", "")  # Puede venir vacío
+            
+            print(verificacion)
+            print(registro_id)
+            print(fecha)
+            # print(descripcion)
+
+
+            # Verificar si el estado ya existe y lo modifico
+            estado = Estado.objects.filter(registro_verificado_id=registro_id, fecha=fecha).first()
+            # print(f"Registro ID: {registro_id}, Fecha: {fecha}, Verificación: {verificacion}, Descripción: {estado.descripcion}")
+            if estado is not None:
+                estado.fecha = fecha
+                estado.tipo_verificacion = verificacion
+                estado.descripcion = estado.descripcion
+                estado.save()
+            else:
+                # descripcion = data.get("descripcion", "")
+                # Si el estado no existe, crearlo
+                estado_nuevo = Estado.objects.create(
+                    registro_verificado=RegistroMonitor.objects.get(id=registro_id),
+                    tipo_verificacion=verificacion,
+                    fecha=fecha,
+                    # descripcion=descripcion
+                )
+                estado_nuevo.save()
+
+            return JsonResponse({"success": True})
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return JsonResponse({"success": False, "error": str(e)})
+
+    return JsonResponse({"success": False, "error": "Método no permitido"})
+
+# guarda la descripcion cuando cambia
+def registrarDescripcion(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)  # Cargar los datos JSON enviados desde fetch
+            registro_id = data.get("registro_id")
+            fecha = data.get("fecha")
+            descripcion = data.get("descripcion")
+
+            print(f"Registro ID: {registro_id}, Fecha: {fecha}, Descripción: {descripcion}")
+
+            # Verificar si el estado ya existe y lo modifico
+            estado = Estado.objects.filter(registro_verificado_id=registro_id, fecha=fecha).first()
+            if estado is not None:
+                estado.descripcion = descripcion
+                estado.save()
+            else:
+                estado_nuevo = Estado.objects.create(
+                    registro_verificado=RegistroMonitor.objects.get(id=registro_id),
+                    tipo_verificacion='desconocido',
+                    descripcion=descripcion,
+                    fecha=fecha
+                )
+                estado_nuevo.save()
+
+            return JsonResponse({"success": True})
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return JsonResponse({"success": False, "error": str(e)})
+
+    # return JsonResponse({"success": False, "error": "Método no permitido"})
+    return redirect('monitoreo')

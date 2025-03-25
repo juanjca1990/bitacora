@@ -1,5 +1,254 @@
 {% extends "AppCrud/padre.html" %}
 {% block title %}Monitoreo{% endblock %}
 {% block bloque %}
+<head>
+    <title>Tabla de Estados</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        table { border-collapse: collapse; width: 100%; }
+        th, td { border: 1px solid black; padding: 8px; text-align: center; cursor: pointer; }
+        .icono-verde { color: green; }
+        .icono-rojo { color: red; }
+        .icono-amarillo { color: orange; }
+        .icono-vacio { color: gray;}
+        .descripcion-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .descripcion-btn {
+            margin-top: 5px;
+            background-color: #f0f0f0;
+            border: none;
+            padding: 5px;
+            cursor: pointer;
+        }
+        .icon-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        /* Estilos para el modal */
+        .modal {
+            display: none; /* Ocultar el modal por defecto */
+            position: fixed; /* Fijar el modal en la pantalla */
+            z-index: 1; /* Asegurarse de que el modal esté sobre otros elementos */
+            left: 0;
+            top: 0;
+            width: 100%; /* Ancho completo */
+            height: 100%; /* Alto completo */
+            background-color: rgba(0,0,0,0.4); /* Fondo semitransparente */
+        }
 
+        /* Modal Content */
+        .modal-content {
+            background-color: white;
+            margin: 15% auto;
+            padding: 20px;
+            border: 1px solid #888;
+            width: 80%;
+            max-width: 400px;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        /* El botón de cierre del modal */
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: black;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        /* Estilo para el área de texto */
+        textarea {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            margin-top: 10px;
+            border: 1px solid #ccc;
+        }
+
+        .submit-btn {
+            margin-top: 10px;
+            padding: 8px 16px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        .submit-btn:hover {
+            background-color: #45a049;
+        }
+        /* estilo para indicar si hay descripcion*/
+        .descripcion-btn-azul {
+            background-color: blue;
+            color: white;
+        }
+        
+    </style>
+</head>
+{% load custom_filters %}
+<div>
+    <table>
+        <thead>
+            <tr>
+                <th>Registro</th>
+                {% for dia in dias_mes %}
+                    <th class="{% if dia.es_fin_de_semana %}fin-de-semana{% endif %}">{{ dia.fecha.day }}</th>
+                {% endfor %}
+            </tr>
+            <tr>
+                <th></th>
+                {% for dia in dias_mes %}
+                    <th class="{% if dia.es_fin_de_semana %}fin-de-semana{% endif %}">{{ dia.nombre_dia }}</th>
+                {% endfor %}
+            </tr>
+        </thead>
+        <tbody>
+            {% for fila in tabla_datos %}
+            <tr>
+                <td>{{ fila.registro.nombre }}</td>
+                {% for estado in fila.estados %}
+                    <td>
+                        <div class="icon-container" onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_mes|index:forloop.counter0 }}')">
+                            <i class="fas 
+                                {% if estado %} 
+                                    {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
+                                    {% elif estado.tipo_verificacion == 'desconocido' %}fa-circle icono-vacio
+                                    {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
+                                    {% elif estado.tipo_verificacion == 'no_verificado' %}fa-exclamation-circle icono-amarillo
+                                    {% endif %}
+                                {% else %}
+                                    {% if estado.tipo_verificacion is none %}
+                                        fa-circle icono-vacio
+                                    {% endif %}
+                                {% endif %}
+                            "></i>
+                            <!-- Botón para abrir modal de descripción -->
+                        </div>
+                        <div>
+                            <button class="descripcion-btn {% if estado.descripcion %}descripcion-btn-azul{% endif %}" 
+                                    onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', '{{ estado.id }}', '{{ estado.descripcion|default:'' }}')">
+                            </button>
+                        </div>
+                    </td>
+                {% endfor %}
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Modal -->
+<div id="modalDescripcion" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal()">&times;</span>
+        <h3>Agregar Descripción</h3>
+        <textarea id="descripcionText" placeholder="Escriba la descripción..."></textarea>
+        <button class="submit-btn" onclick="guardarDescripcion()">Guardar</button>
+    </div>
+</div>
+
+<script>
+    let modal = document.getElementById("modalDescripcion");
+    let registroIdGlobal, fechaGlobal, estadoIdGlobal;
+
+    // Función para cambiar el estado de un registro
+    function cambiarEstado(elemento, registroId, fecha) {
+        let icono = elemento.querySelector("i");
+        let estados = [
+            { clase: "fa-circle icono-vacio", valor: "desconocido" },
+            { clase: "fa-check-circle icono-verde", valor: "bien" },
+            { clase: "fa-times-circle icono-rojo", valor: "fallo" },
+            { clase: "fa-exclamation-circle icono-amarillo", valor: "no_verificado" }
+        ];
+    
+        let indexActual = estados.findIndex(e => icono.className.includes(e.clase.split(" ")[0]));
+        let nuevoIndex = (indexActual + 1) % estados.length;
+        
+        let nuevoValor = estados[nuevoIndex].valor;
+        
+        icono.className = "fas " + estados[nuevoIndex].clase;
+        
+        console.log("Estado cambiado a:", nuevoValor);
+    
+        // Convertir la fecha al formato YYYY-MM-DD si es necesario
+        let fechaObj = new Date(fecha);
+        let fechaFormateada = fechaObj.toISOString().split("T")[0];
+    
+        fetch("/AppCrud/registrarEstado/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+            body: JSON.stringify({ registro_id: registroId, fecha: fechaFormateada, tipo_verificacion: nuevoValor })
+        }).then(response => response.json()).then(data => {
+            if (!data.success) {
+                alert("Error al actualizar el estado.");
+            }
+        });
+    }
+
+    function abrirModal(registroId, fecha, estadoId, descripcionActual = "") {
+        registroIdGlobal = registroId;
+        fechaGlobal = fecha;
+        estadoIdGlobal = estadoId;
+    
+        // Establecer la descripción en el modal si existe
+        document.getElementById("descripcionText").value = descripcionActual;
+    
+        // Mostrar el modal
+        modal.style.display = "block";
+    }
+
+    function cerrarModal() {
+        // Limpiar el contenido del textarea
+        document.getElementById("descripcionText").value = "";
+        // Cerrar el modal
+        modal.style.display = "none";
+    }
+    
+
+    // Función para guardar la descripción 
+    function guardarDescripcion() {
+        let descripcion = document.getElementById("descripcionText").value;
+        let fechaISO = new Date(fechaGlobal).toISOString().split('T')[0];  // Aquí usas fechaGlobal en lugar de fecha
+    
+        fetch("/AppCrud/registrarDescripcion/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+            body: JSON.stringify({
+                registro_id: registroIdGlobal,
+                fecha: fechaISO,  // Asegúrate de enviar la fecha correctamente formateada
+                descripcion: descripcion
+            })
+        }).then(response => response.json()).then(data => {
+            if (data.success) {
+                alert("Descripción guardada correctamente.");
+                cerrarModal();
+            } else {
+                alert("Error al guardar la descripción.");
+            }
+        });
+    }
+
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            document.cookie.split(';').forEach(cookie => {
+                let trimmed = cookie.trim();
+                if (trimmed.startsWith(name + '=')) {
+                    cookieValue = decodeURIComponent(trimmed.substring(name.length + 1));
+                }
+            });
+        }
+        return cookieValue;
+    }
+</script>
 {% endblock %}

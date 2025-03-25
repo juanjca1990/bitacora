@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from colorfield.fields import ColorField
+from django.utils.timezone import now
 
 
     
@@ -33,6 +34,25 @@ class RegistroMonitor(models.Model):
 
     def __str__(self):
         return f"{self.nombre} - {self.empresa.nombre} - {self.servidor.nombre}"
+    
+class Estado(models.Model):
+    OPCIONES_VERIFICACION = [
+        ('desconocido', 'desconocido'),
+        ('bien', 'Bien'),
+        ('fallo', 'Fallo'),
+        ('no_verificado', 'No Verificado'),
+    ]
+
+    descripcion = models.TextField(blank=True, null=True)
+    registro_verificado = models.ForeignKey(RegistroMonitor, on_delete=models.CASCADE, related_name="estados")
+    tipo_verificacion = models.CharField(max_length=20, choices=OPCIONES_VERIFICACION, default='none')
+    fecha = models.DateField(default=now)
+
+    class Meta:
+        unique_together = ('registro_verificado', 'fecha')  # Un estado por día y por registro
+
+    def __str__(self):
+        return f"{self.registro_verificado.nombre} - {self.tipo_verificacion} - {self.fecha}"
 
 class User(AbstractUser):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE)
