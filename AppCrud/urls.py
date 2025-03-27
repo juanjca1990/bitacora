@@ -50,7 +50,9 @@ urlpatterns = [
     path('altaRegistroMonitor/<int:empresa_id>', altaRegistroMonitor, name='altaRegistroMonitor'),
     path('eliminarRegistroMonitor/<int:empresa_id>,<int:registro_id>', eliminarRegistroMonitor, name='eliminarRegistroMonitor'),
     
-    path('monitoreo/', monitoreo, name='monitoreo'),
+    path('monitoreo/<str:hoy>/', monitoreo, name='monitoreo'),
     path('registrarEstado/', views.registrarEstado, name='registrarEstado'),
     path('registrarDescripcion/', views.registrarDescripcion, name='registrarDescripcion'),
+    path('obtener_fecha/', views.obtener_fecha, name='obtener_fecha'),
+    path('cambiarFechaMonitor/', views.cambiarFechaMonitor, name='cambiarFechaMonitor'),
 ]
