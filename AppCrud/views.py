@@ -2,7 +2,7 @@ from collections import defaultdict
 import locale
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from AppCrud.models import Estado, Job, Contacto, Aviso, Bitacora, Empresa, RegistroMonitor, Servidor, User, VisualEmpresa
+from AppCrud.models import  Estado, Job, Contacto, Aviso, Bitacora, Empresa, RegistroMonitor, Servidor, User, VisualEmpresa
 from AppCrud.forms import JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, RegistroMonitorForm, RegistroUsuarioForm, ServidorForm, UserEditForm, EmpresaVisualForm
 
 from django.core.paginator import Paginator
@@ -18,10 +18,10 @@ import datetime
 from django.utils.timezone import now
 from django.utils.timezone import make_aware
 from django.views.decorators.csrf import csrf_exempt
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from django.shortcuts import get_object_or_404
 import json
-
+from dateutil.relativedelta import relativedelta
 
 def inicio(request):
     mensaje = request.GET.get('mensaje', '')
@@ -682,14 +682,14 @@ def obtener_mails_y_nombres(job):
 def servidor(request):
     usuario = request.user
     empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
-    servidores = Servidor.objects.all()
+    servidores = Servidor.objects.filter(empresa=empresa)
     return render(request, "AppCrud/ABMservidor.html", {"servidores": servidores, "usuario":usuario , 'empresa':empresa})
     # return render(request, "AppCrud/ABMservidor.html", {"servidores": servidores, "admin_perm": usuario.has_perm('AppCrud.empresa_admin')})
     
 def registro(request):
     usuario = request.user
     empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
-    registros = RegistroMonitor.objects.all()
+    registros = RegistroMonitor.objects.filter(empresa=empresa)
     return render(request, "AppCrud/ABMregistro.html", {"registros": registros, "usuario":usuario ,  'empresa':empresa})
 
 def altaServidor(request, empresa_id):
@@ -738,99 +738,95 @@ def eliminarRegistroMonitor(request, empresa_id, registro_id):
     registro = RegistroMonitor.objects.get(id=registro_id , empresa_id=empresa_id)
     registro.delete()
     return redirect('registro')
-   
 
-# def monitoreo(request):
-    
-#     usuario = request.user
-#     empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
-#     servidores = Servidor.objects.all()
-#     servidores_propios = Servidor.objects.filter(empresa=empresa)
-    
-#     hoy = now().date()
-#     primer_dia = hoy.replace(day=1)
-#     ultimo_dia = (primer_dia.replace(month=primer_dia.month + 1, day=1) - timedelta(days=1))
 
-#     registros = RegistroMonitor.objects.all()
-#     dias_mes = [primer_dia + timedelta(days=i) for i in range((ultimo_dia - primer_dia).days + 1)]
-    
-#     tabla_datos = []
-    
-#     for registro in registros:
-#         estados = {estado.fecha: estado for estado in Estado.objects.filter(registro_verificado=registro, fecha__range=(primer_dia, ultimo_dia))}
-#         fila = {
-#             "registro": registro,
-#             "estados": [estados.get(dia, None) for dia in dias_mes]
-#         }
-#         tabla_datos.append(fila)
+def obtener_fecha(request):
+    hoy = now().date()
+    return redirect('monitoreo', hoy=hoy)
 
-#     print("Días del mes:", dias_mes)
-#     print("Registros:", registros)
-#     print("Tabla de datos:", tabla_datos)
 
-#     return render(request, "AppCrud/monitoreo.html", {
-#         "tabla_datos": tabla_datos,
-#         "dias_mes": dias_mes,
-#     })
-
-# def monitoreo(request):
+def cambiarFechaMonitor(request):
+    mes = int(request.GET.get('mes', date.today().month))
+    anio = int(request.GET.get('anio', date.today().year))
     
-def monitoreo(request):
+    print("El mes:", mes)
+    print("El anio:", anio)
+
+    # Crear la nueva fecha con el primer día del mes
+    nueva_fecha = date(anio, mes, 1)
+    
+    print("La nueva fecha:", nueva_fecha)
+
+    return redirect('monitoreo', hoy=nueva_fecha.strftime("%Y-%m-%d"))
+    
+
+def monitoreo(request, hoy):
     usuario = request.user
     empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
-    servidores = Servidor.objects.all()
-    servidores_propios = Servidor.objects.filter(empresa=empresa)
 
-    hoy = now().date()
+    # 🔹 Servidores de la empresa + los servidores fijos ("EPE", "EQE", "EDE")
+    servidores_fijos = ["EPE", "EQE", "EDE"]
+    servidores_empresa = list(Servidor.objects.filter(empresa=empresa).values_list("nombre", flat=True))
+    servidores_todos = set(servidores_empresa + servidores_fijos)  # Asegurar que estén todos
+
+    hoy = datetime.strptime(hoy, "%Y-%m-%d").date()
     primer_dia = hoy.replace(day=1)
-    ultimo_dia = (primer_dia.replace(month=primer_dia.month + 1, day=1) - timedelta(days=1))
-    mes = int(request.GET.get('mes', now().month))
-    anio = int(request.GET.get('anio', now().year))
-
-    # Generar los días del mes y filtrar solo los días que no sean sábado (5) ni domingo (6)
+    ultimo_dia = (primer_dia + relativedelta(months=1)) - timedelta(days=1)
 
     dias_mes = [
         dia for dia in (primer_dia + timedelta(days=i) for i in range((ultimo_dia - primer_dia).days + 1))
     ]
-    
-    # Configurar el locale en español (si el servidor lo soporta)
+
     try:
         locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
     except locale.Error:
         locale.setlocale(locale.LC_TIME, '')
 
-    # Generar los nombres de los días con solo la inicial en español
     dias_semana = [dia.strftime('%A')[0].upper() for dia in dias_mes]
 
-    # Obtener los registros y estados de verificación
-    registros = RegistroMonitor.objects.all()
+    registros = RegistroMonitor.objects.filter(servidor__nombre__in=servidores_todos)  # 📌 Solo los servidores requeridos
     estados = Estado.objects.filter(fecha__range=(primer_dia, ultimo_dia)).select_related('registro_verificado')
-    # Crear un diccionario de estados por registro y fecha
+
     estados_dict = defaultdict(dict)
     for estado in estados:
         estados_dict[estado.registro_verificado.id][estado.fecha] = estado
-    # Crear la tabla de datos
-    tabla_datos = []
+
+    # 📌 Inicializar estructura asegurando que "EPE", "EQE" y "EDE" están presentes
+    registros_por_servidor = {servidor: [] for servidor in servidores_todos}
+
     for registro in registros:
+        servidor_nombre = registro.servidor.nombre
         fila = {
             "registro": registro,
             "estados": [estados_dict[registro.id].get(dia, None) for dia in dias_mes]
         }
-        tabla_datos.append(fila)
+        registros_por_servidor[servidor_nombre].append(fila)
 
-    # Generamos la lista de días del mes (asumo que ya la tienes en 'dias_mes')
+    # Ordenar por nombre de servidor
+    registros_por_servidor = dict(sorted(registros_por_servidor.items()))
+
     dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
 
-    # Pasamos la lista 'dias_no_modificables' al template
+    mes_anterior = (primer_dia - relativedelta(months=1)).month
+    anio_anterior = (primer_dia - relativedelta(months=1)).year
+    mes_siguiente = (primer_dia + relativedelta(months=1)).month
+    anio_siguiente = (primer_dia + relativedelta(months=1)).year
+    
+    mes = hoy.month
+    anio = hoy.year
+
     return render(request, "AppCrud/monitoreo.html", {
-        "tabla_datos": tabla_datos,
+        "registros_por_servidor": registros_por_servidor,  # Pasamos el diccionario ordenado
         "dias_mes": dias_mes,
         "dias_semana": dias_semana,
-        "dias_no_modificables": dias_no_modificables,  #Lista de True/False indicando si es fin de semana
-        "mes": mes, 
+        "dias_no_modificables": dias_no_modificables,
+        "mes": mes,
         "anio": anio,
+        "mes_anterior": mes_anterior,
+        "anio_anterior": anio_anterior,
+        "mes_siguiente": mes_siguiente,
+        "anio_siguiente": anio_siguiente,
     })
-        
 
 def registrarEstado(request):
     if request.method == "POST":

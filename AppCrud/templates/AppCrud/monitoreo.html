@@ -117,81 +117,160 @@
             border-radius: 5px;
         }
 
+        .leyenda-iconos {
+            display: flex;
+            gap: 20px;
+            margin-bottom: 10px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border-radius: 5px;
+        }
+        
+        .icono-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+            color: #333;
+        }
+        .cuadro-azul {
+            width: 15px;
+            height: 15px;
+            background-color: blue;
+            border-radius: 3px;
+            display: inline-block;
+        }
+
+        td.nombre-descripcion {
+            max-width: 450px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+        }
+        
+        th, td {
+            padding: 5px;  /* Reduce el espacio interno */
+            text-align: center;
+            border: 1px solid #050000;
+            font-size: 12px;  /* Reduce el tamaño del texto */
+            min-width: 30px;  /* Ajusta el ancho mínimo */
+            height: 25px;  /* Ajusta la altura */
+        }
+        
+        th {
+            background-color: #f0f0f0;
+            font-weight: bold;
+        }
+
         
     </style>
 </head>
 {% load custom_filters %}
-<div>
-    <div class="nav-meses">
-        <a href="?mes={{ mes_anterior }}&anio={{ anio_anterior }}">← Mes Anterior</a>
-        <h3>{{ mes }}/{{ anio }}</h3>
-        <a href="?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}">Mes Siguiente →</a>
-    </div>
-    <table>
-        <thead>
-            <tr>
-                <th></th>
-                {% for dia in dias_semana %}
-                    <th>{{ dia }}</th>
-                {% endfor %}
-            </tr>
-            <tr>
-                <th>Registro</th>
-                {% for dia in dias_mes %}
-                    <th>{{ dia.day }}</th>
-                {% endfor %}
-            </tr>
-        </thead>
-        <tbody>
-            {% for fila in tabla_datos %}
-            <tr>
-                <td>{{ fila.registro.nombre }}</td>
-                {% for estado in fila.estados %}
-                <td>
-                    {# Icon container: Si es fin de semana, le agregamos un fondo naranja y no agregamos el onclick #}
-                    {% if dias_no_modificables|index:forloop.counter0 %}
-                        <div class="icon-container" style="background-color: orange;">
-                            <i></i>
-                        </div>
-                    {% else %}
-                        <div class="icon-container" onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_mes|index:forloop.counter0 }}')">
-                            <i class="fas 
-                                {% if estado %} 
-                                    {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
-                                    {% elif estado.tipo_verificacion == 'desconocido' %}fa-circle icono-vacio
-                                    {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
-                                    {% elif estado.tipo_verificacion == 'no_verificado' %}fa-exclamation-circle icono-amarillo
-                                    {% endif %}
+{% if registros_por_servidor %}
+    <div>
+        <div class="leyenda-iconos">
+            <div class="icono-item">
+                <i class="fas fa-check-circle icono-verde"></i> Verificado correctamente
+            </div>
+            <div class="icono-item">
+                <i class="fas fa-circle icono-vacio"></i> No verificado
+            </div>
+            <div class="icono-item">
+                <i class="fas fa-times-circle icono-rojo"></i> Fallo en la verificación
+            </div>
+            <div class="icono-item">
+                <i class="fas fa-exclamation-circle icono-amarillo"></i> Verificación pendiente
+            </div>
+            <div class="icono-item">
+                <div class="cuadro-azul"></div> Se realizó un comentario
+            </div>
+        </div>
+        <div class="nav-meses">
+            <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}">← Mes Anterior</a>
+            <h3>{{ mes }}/{{ anio }}</h3>
+            <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}">Mes Siguiente →</a>
+        </div>
+
+        {% for servidor, tabla_datos in registros_por_servidor.items %}
+            <h2>Servidor: {{ servidor }}</h2>  {# Mostramos el nombre del servidor #}
+
+            {% if tabla_datos %}
+                <table>
+                    <thead>
+                        <tr>
+                            <th></th>
+                            {% for dia in dias_semana %}
+                                <th>{{ dia }}</th>
+                            {% endfor %}
+                        </tr>
+                        <tr>
+                            <th>Registro</th>
+                            {% for dia in dias_mes %}
+                                <th>{{ dia.day }}</th>
+                            {% endfor %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for fila in tabla_datos %}
+                        <tr>
+                            <td class="nombre-descripcion"><p>{{ fila.registro.nombre }}</p><p>{{ fila.registro.descripcion }}</p></td>
+                            {% for estado in fila.estados %}
+                            <td>
+                                {% if dias_no_modificables|index:forloop.counter0 %}
+                                    <div class="icon-container" style="background-color: orange;">
+                                        <i></i>
+                                    </div>
                                 {% else %}
-                                    {% if estado.tipo_verificacion is none %} 
-                                        fa-circle icono-vacio 
-                                    {% endif %}
+                                    <div class="icon-container" onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_mes|index:forloop.counter0 }}')">
+                                        <i class="fas 
+                                            {% if estado %} 
+                                                {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
+                                                {% elif estado.tipo_verificacion == 'desconocido' %}fa-circle icono-vacio
+                                                {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
+                                                {% elif estado.tipo_verificacion == 'no_verificado' %}fa-exclamation-circle icono-amarillo
+                                                {% endif %}
+                                            {% else %}
+                                                {% if estado.tipo_verificacion is none %} 
+                                                    fa-circle icono-vacio 
+                                                {% endif %}
+                                            {% endif %}
+                                        "></i>
+                                    </div>
                                 {% endif %}
-                            "></i>
-                        </div>
-                    {% endif %}
-                
-                    {# Opciones de modificación: solo se muestran si no es fin de semana #}
-                    {% if not dias_no_modificables|index:forloop.counter0 %}
-                        <div>
-                            <button class="descripcion-btn {% if estado.descripcion %}descripcion-btn-azul{% endif %}" 
-                                    onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', '{{ estado.id }}', '{{ estado.descripcion|default:'' }}')">
-                            </button>
-                        </div>
-                    {% endif %}
-                </td>
-                {% endfor %}
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+                            
+                                {% if not dias_no_modificables|index:forloop.counter0 %}
+                                    <div>
+                                        <button class="descripcion-btn {% if estado.descripcion %}descripcion-btn-azul{% endif %}" 
+                                                onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', '{{ estado.id }}', '{{ estado.descripcion|default:'' }}')">
+                                        </button>
+                                    </div>
+                                {% endif %}
+                            </td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <p>No hay registros para este servidor.</p>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% else %}
+    <p>No hay datos disponibles para mostrar.</p>
+{% endif %}
+<p></p>
 
 <!-- Modal -->
 <div id="modalDescripcion" class="modal">
     <div class="modal-content">
         <span class="close" onclick="cerrarModal()">&times;</span>
-        <h3>Agregar Descripción</h3>
+        <h3>Agregar Comentario</h3>
         <textarea id="descripcionText" placeholder="Escriba la descripción..."></textarea>
         <button class="submit-btn" onclick="guardarDescripcion()">Guardar</button>
     </div>
@@ -234,6 +313,8 @@
         }).then(response => response.json()).then(data => {
             if (!data.success) {
                 alert("Error al actualizar el estado.");
+            } else {
+                location.reload();  // Recargar la página después de actualizar el estado
             }
         });
     }
@@ -275,6 +356,7 @@
             if (data.success) {
                 alert("Descripción guardada correctamente.");
                 cerrarModal();
+                location.reload();
             } else {
                 alert("Error al guardar la descripción.");
             }
