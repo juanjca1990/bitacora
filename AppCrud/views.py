@@ -22,6 +22,14 @@ from datetime import date, datetime, timedelta
 from django.shortcuts import get_object_or_404
 import json
 from dateutil.relativedelta import relativedelta
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle ,PageTemplate, BaseDocTemplate ,Frame ,Paragraph# type: ignore
+from reportlab.lib.pagesizes import letter ,landscape # type: ignore
+from reportlab.pdfgen import canvas # type: ignore
+from reportlab.lib import colors # type: ignore
+from django.http import FileResponse
+import io
+from reportlab.lib.styles import getSampleStyleSheet # type: ignore
+
 
 def inicio(request):
     mensaje = request.GET.get('mensaje', '')
@@ -826,6 +834,7 @@ def monitoreo(request, hoy):
         "anio_anterior": anio_anterior,
         "mes_siguiente": mes_siguiente,
         "anio_siguiente": anio_siguiente,
+        "empresa": empresa,
     })
 
 def registrarEstado(request):
@@ -902,3 +911,55 @@ def registrarDescripcion(request):
 
     # return JsonResponse({"success": False, "error": "Método no permitido"})
     return redirect('monitoreo')
+
+
+def imprimirRegistroMes(request, mes, anio, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    registros = RegistroMonitor.objects.filter(empresa=empresa)
+    registros_especiales = RegistroMonitor.objects.filter(servidor__nombre__in=["EPE", "EQE", "EDE"])
+    registros = registros | registros_especiales
+
+    estados = Estado.objects.filter(
+        registro_verificado__in=registros,
+        fecha__year=anio,
+        fecha__month=mes
+    ).select_related('registro_verificado', 'registro_verificado__servidor')
+
+    buffer = io.BytesIO()
+    pdf = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
+
+    styles = getSampleStyleSheet()
+    styleN = styles["Normal"]
+
+    data = [["Registro", "Descripción", "Servidor", "Comentario", "Estado", "Fecha"]]
+
+    for estado in estados:
+        data.append([
+            Paragraph(estado.registro_verificado.nombre if estado.registro_verificado.nombre else "", styleN),
+            Paragraph(estado.registro_verificado.descripcion if estado.registro_verificado.descripcion else "", styleN),
+            Paragraph(estado.registro_verificado.servidor.nombre if estado.registro_verificado.servidor.nombre else "", styleN),
+            Paragraph(estado.descripcion if estado.descripcion else "", styleN),
+            Paragraph(estado.tipo_verificacion.capitalize() if estado.tipo_verificacion else "", styleN),
+            Paragraph(estado.fecha.strftime("%d-%m-%Y") if estado.fecha else "", styleN),
+        ])
+
+    table = Table(data, colWidths=[80, 250, 80, 200, 80, 80])
+
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+    ]))
+
+    elements = [table]
+    pdf.build(elements)
+
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename=f"Registro_{mes}_{anio}.pdf")

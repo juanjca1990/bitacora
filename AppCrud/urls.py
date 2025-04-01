@@ -55,4 +55,7 @@ urlpatterns = [
     path('registrarDescripcion/', views.registrarDescripcion, name='registrarDescripcion'),
     path('obtener_fecha/', views.obtener_fecha, name='obtener_fecha'),
     path('cambiarFechaMonitor/', views.cambiarFechaMonitor, name='cambiarFechaMonitor'),
+    
+    # path('imprimirRegistroMes/<str:mes>/<str:anio>/<int:empresa_id>', imprimirRegistroMes, name='imprimirRegistroMes'),
+    path('imprimirRegistroMes/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMes, name="imprimirRegistroMes"),
 ]

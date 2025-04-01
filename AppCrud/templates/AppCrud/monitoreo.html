@@ -171,8 +171,9 @@
     </style>
 </head>
 {% load custom_filters %}
+<h1 style="text-align: center;">{{empresa}}</h1>
 {% if registros_por_servidor %}
-    <div>
+    <div>   
         <div class="leyenda-iconos">
             <div class="icono-item">
                 <i class="fas fa-check-circle icono-verde"></i> Verificado correctamente
@@ -188,6 +189,11 @@
             </div>
             <div class="icono-item">
                 <div class="cuadro-azul"></div> Se realizó un comentario
+            </div>
+            <div class="nav-meses">
+                <a href="{% url 'imprimirRegistroMes' mes=mes anio=anio empresa_id=empresa.id %}">
+                    Imprimir registro mes
+                </a>
             </div>
         </div>
         <div class="nav-meses">
