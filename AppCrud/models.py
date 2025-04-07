@@ -43,7 +43,7 @@ class Estado(models.Model):
         ('no_verificado', 'No Verificado'),
     ]
 
-    descripcion = models.TextField(blank=True, null=True)
+    descripcion = models.TextField(blank=True, null=True) #comentario del estado
     registro_verificado = models.ForeignKey(RegistroMonitor, on_delete=models.CASCADE, related_name="estados")
     tipo_verificacion = models.CharField(max_length=20, choices=OPCIONES_VERIFICACION, default='none')
     fecha = models.DateField(default=now)
