@@ -381,6 +381,21 @@ def empresaForm(request):
             visual_empresa.save()
             empresa.visual_empresa = visual_empresa
             empresa.save()
+            # Replicar registros en otras empresas 
+            # Obtener la empresa "Exerom" y los registros de los servidores EPE, EDE y EQE para replicarlos a la nueva empresa
+            exerom = Empresa.objects.get(nombre="Exerom")
+            registros = RegistroMonitor.objects.filter(servidor__nombre__in=["EPE", "EDE", "EQE"], empresa = exerom)
+            for registro in registros:
+                print("Registro: ", registro.nombre)
+                print("Descripcion: ", registro.descripcion)
+                print("Servidor: ", registro.servidor.nombre)
+                print("Empresa: ", empresa)
+                RegistroMonitor.objects.create(
+                    nombre=registro.nombre,
+                    descripcion=registro.descripcion,
+                    empresa=empresa,
+                    servidor=registro.servidor
+    )
             empresas = Empresa.objects.all()
             usuario = request.user
             # Creación grupos:
@@ -723,22 +738,70 @@ def eliminarServidor(request, empresa_id, servidor_id):
     return redirect('servidor')
 
 
+# def altaRegistroMonitor(request, empresa_id):
+#     usuario = request.user
+#     empresa = Empresa.objects.get(id=empresa_id)
+#     if request.method == "POST":
+#         form = RegistroMonitorForm(request.POST)
+#         if form.is_valid():
+#             form.instance.nombre = request.POST['nombre']
+#             form.instance.descripcion = request.POST['descripcion']
+#             form.instance.empresa = empresa 
+#             servidor = request.POST['servidor']
+#             form.instance.servidor = Servidor.objects.get(id=servidor)
+#             form.save()
+#             return redirect('registro')  # Asegúrate de tener esta vista creada
+#     else:
+#         form = RegistroMonitorForm()
+#     return render(request, "AppCrud/altaRegistroMonitor.html", {"empresa": empresa, "usuario":usuario , "form":form})
+
 def altaRegistroMonitor(request, empresa_id):
     usuario = request.user
     empresa = Empresa.objects.get(id=empresa_id)
+    
     if request.method == "POST":
         form = RegistroMonitorForm(request.POST)
         if form.is_valid():
-            form.instance.nombre = request.POST['nombre']
-            form.instance.descripcion = request.POST['descripcion']
-            form.instance.empresa = empresa 
-            servidor = request.POST['servidor']
-            form.instance.servidor = Servidor.objects.get(id=servidor)
-            form.save()
-            return redirect('registro')  # Asegúrate de tener esta vista creada
+            nombre = request.POST['nombre']
+            descripcion = request.POST['descripcion']
+            servidor_id = request.POST['servidor']
+            servidor = Servidor.objects.get(id=servidor_id)
+            
+            # Crear el registro original
+            registro = form.save(commit=False)
+            registro.nombre = nombre
+            registro.descripcion = descripcion
+            registro.empresa = empresa
+            registro.servidor = servidor
+            registro.save()
+            print("servidor", servidor.nombre)
+            # Si el servidor se llama 'ede', 'eqe' o 'epe', replicar en otras empresas
+            if servidor.nombre in ['EDE', 'EQE', 'EPE']:
+                otras_empresas = Empresa.objects.exclude(id=empresa.id)
+                print(otras_empresas)
+                for otra_empresa in otras_empresas:
+                    try:
+                        # servidor_otro = Servidor.objects.get(nombre=servidor.nombre, empresa=otra_empresa)
+                        RegistroMonitor.objects.create(
+                            nombre=nombre,
+                            descripcion=descripcion,
+                            empresa=otra_empresa,
+                            servidor=servidor
+                        )
+                    except Servidor.DoesNotExist:
+                        # Si la otra empresa no tiene un servidor con ese nombre, simplemente lo ignoramos
+                        continue
+
+            return redirect('registro')  # Redirigir después del guardado
+
     else:
         form = RegistroMonitorForm()
-    return render(request, "AppCrud/altaRegistroMonitor.html", {"empresa": empresa, "usuario":usuario , "form":form})
+
+    return render(request, "AppCrud/altaRegistroMonitor.html", {
+        "empresa": empresa,
+        "usuario": usuario,
+        "form": form
+    })
 
 
 def eliminarRegistroMonitor(request, empresa_id, registro_id):
@@ -773,9 +836,30 @@ def monitoreo(request, hoy):
     empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
 
     # 🔹 Servidores de la empresa + los servidores fijos ("EPE", "EQE", "EDE")
+    # servidores_fijos = ["EPE", "EQE", "EDE"]
+    # servidores_fijos_ids = list(Servidor.objects.filter(nombre__in=servidores_fijos).values_list("id", flat=True))
+    # servidores_empresa = list(Servidor.objects.filter(empresa=empresa).values_list("nombre", flat=True))
+    # servidores_todos = set(servidores_empresa)  # Asegurar que estén todos
+
     servidores_fijos = ["EPE", "EQE", "EDE"]
-    servidores_empresa = list(Servidor.objects.filter(empresa=empresa).values_list("nombre", flat=True))
-    servidores_todos = set(servidores_empresa + servidores_fijos)  # Asegurar que estén todos
+    servidores_fijos_ids = list(Servidor.objects.filter(nombre__in=servidores_fijos).values_list("id", flat=True))
+    # servidores_empresa_ids = list(Servidor.objects.filter(empresa=empresa).values_list("id", flat=True))
+    servidores_empresa_ids = list(
+        Servidor.objects.filter(empresa=empresa).exclude(nombre__in=servidores_fijos).values_list("id", flat=True)
+    )
+
+    # 🔹 Registros de la empresa
+    registros_empresa = RegistroMonitor.objects.filter(servidor_id__in=servidores_empresa_ids)
+
+    # 🔹 Registros de los servidores fijos (aunque no sean de la empresa)
+    registros_fijos = RegistroMonitor.objects.filter(servidor_id__in=servidores_fijos_ids, empresa_id = empresa.id)
+
+    # 🔹 Unión de todos los registros
+    registros = registros_empresa | registros_fijos
+    registros = registros.select_related('servidor')
+
+    # 🔹 Conjuntos de nombres de servidores para asegurar la visualización
+    servidores_todos = set(registros.values_list("servidor__nombre", flat=True))
 
     hoy = datetime.strptime(hoy, "%Y-%m-%d").date()
     primer_dia = hoy.replace(day=1)
@@ -792,7 +876,7 @@ def monitoreo(request, hoy):
 
     dias_semana = [dia.strftime('%A')[0].upper() for dia in dias_mes]
 
-    registros = RegistroMonitor.objects.filter(servidor__nombre__in=servidores_todos)  # 📌 Solo los servidores requeridos
+    # registros = RegistroMonitor.objects.filter(servidor__nombre__in=servidores_todos)  # 📌 Solo los servidores requeridos
     estados = Estado.objects.filter(fecha__range=(primer_dia, ultimo_dia)).select_related('registro_verificado')
 
     estados_dict = defaultdict(dict)
