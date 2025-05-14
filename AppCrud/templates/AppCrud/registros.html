@@ -1,0 +1,33 @@
+{% extends "AppCrud/padre.html" %}
+
+{% block title %}Lista de Registros{% endblock %}
+
+{% block bloque %}
+<div class="container mt-5">
+    <h1 class="text-center">Lista de Registros</h1>
+    
+    <!-- Botón para dar de alta un registro -->
+    <div class="text-end mb-3">
+        <a href="{% url 'RegistroForm' %}" class="btn btn-primary">Dar de Alta Registro</a>
+    </div>
+    
+    <table class="table table-bordered table-striped mt-3">
+        <thead class="bg-light">
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Nombre</th>
+                <th scope="col">Descripción</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for registro in registros %}
+            <tr>
+                <td>{{ registro.id }}</td>
+                <td>{{ registro.nombre }}</td>
+                <td>{{ registro.descripcion }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

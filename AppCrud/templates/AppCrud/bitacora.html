@@ -1,0 +1,208 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Bitacora{% endblock %}
+{% block bloque %}
+    <div class="container mt-5">
+        <form method="GET" action="{% url 'bitacora' %}">
+            <div class="row g-3 align-items-center">
+              <div class="col-md-4">
+                <label class="form-label" for="emp">Empresa:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="emp" value="{{ request.GET.emp }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="periodo">Periodo:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="periodo" value="{{ request.GET.periodo }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="dia">Dia:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="dia" value="{{ request.GET.dia }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="hora">Hora Inicio:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="hora" value="{{ request.GET.hora }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="impacto">Impacto:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="impacto" value="{{ request.GET.impacto }}">
+                </div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label" for="job">Job:</label>
+                <div class="input-group">
+                  <input class="form-control" type="text" name="job" value="{{ request.GET.job }}">
+                </div>
+              </div>
+              <div class="col-md-4 mt-3">
+                <div class="">
+                  <button class="btn btn-primary ml-auto" type="submit">Filtrar</button>
+                </div>
+              </div>
+            </div>
+          </form>
+          
+        
+          
+          <h1 class="mt-5">BITACORA</h1>
+          {% for message in messages %}
+          <div class="alert alert-{{ message.tags }}">
+              {{ message }}
+          </div>
+          {% endfor %}
+        {% for empresa, bitacoras in paginated_bitacoras.items %}
+        {% if user.empresa == empresa or user.is_superuser %}
+            <h2>{{ empresa }}</h2>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered table-striped custom-table">
+                    <thead class="bg-light">
+                        <tr>
+                            <th scope="col" ></th>
+                            <th scope="col">Periodo</th>
+                            <th scope="col">Dias</th>
+                            <th scope="col">Hora</th>
+                            <th scope="col">Impacto</th>
+                            <th scope="col">Que hacer?</th>
+                            <th scope="col">AVISAR</th>
+                            {% if admin_perm %}
+                                <th scope="col"> </th>
+                                <th scope="col"> </th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for bitacora in bitacoras %}
+                            {% if bitacora.empresa == empresa %}
+                                <tr>
+                                    <th scope="row">{{ bitacora.job }}</th>
+                                    <td>{{ bitacora.periodo }}</td>
+                                    <td>{{ bitacora.dias }}</td>
+                                    <td>{{ bitacora.inicio }}</td>
+                                    <td>{{ bitacora.impacto }}</td>
+                                    <td>{{ bitacora.si_cancela }}</td>
+                                    <td><a class="btn btn-danger btn-sm" href="{% url 'avisar' bitacora.job.id %}">AVISAR</a></td>
+                                    {% if admin_perm %}
+                                        <td>
+                                            <a class="btn btn-primary btn-sm" href="{% url 'editarBitacora' bitacora.id %}">Editar</a>
+                                        </td>
+                                        <td>
+                                            <a class="btn btn-danger btn-sm" href="{% url 'borrarBitacora' bitacora.id %}">Eliminar</a>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if bitacoras.has_other_pages %}
+            <div class="pagination">
+                {% if bitacoras.has_previous %}
+                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}=1{% endif %}">&laquo;</a>
+                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ bitacoras.previous_page_number }}{% endif %}">&lsaquo;</a>
+                {% endif %}
+                {% with counter=forloop.counter %}
+                    {% for num in bitacoras.paginator.page_range %}
+                        {% if bitacoras.number == num %}
+                        <span class="current-page">{{ num }}</span>
+                        {% elif num > bitacoras.number|add:'-3' and num < bitacoras.number|add:'3' %}
+                        <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{counter}}={{ num }}{% endif %}">{{ num }}</a>
+                        {% endif %}
+                    {% endfor %}
+                {% endwith %}
+                {% if bitacoras.has_next %}
+                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ bitacoras.next_page_number }}{% endif %}">&rsaquo;</a>
+                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ bitacoras.paginator.num_pages }}{% endif %}">&raquo;</a>
+                {% endif %}
+            </div>
+            {% endif %}
+        </div>
+    {% endif %}
+{% endfor %}
+
+<!-- En tu archivo mi_template.html -->
+<!-- Agrega los estilos y scripts necesarios de Bootstrap -->
+
+
+<!-- Modal -->
+<div class="modal fade" id="miModal" tabindex="-1" role="dialog" aria-labelledby="miModalLabel" aria-hidden="true">
+  <div class="modal-dialog" style="max-width: 800px; width: 100%;" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h1 class="modal-title mt-1" id="miModalLabel">ENVIAR MAIL</h1>
+              <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                  <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+              <!-- Formulario de Django precargado -->
+              <h4>El siguiente mail será enviado a: {{ nombres  }}</h4>
+              si desea cambiar el/los destinatarios se deberán configurar desde los avisos
+              
+              {% firstof job.id 1 as job_id %}
+              <form method="POST" action="{% url 'avisar' job_id %}">
+                  {% csrf_token %}
+                  {{ form.as_p }}
+                  <button type="submit" class="btn btn-primary me-0">Enviar</button>
+              </form>
+          </div>
+      </div>
+  </div>
+</div>
+
+
+        {% if admin_perm %}
+        <div class="row mt-2">
+            <div class="col-md-12">
+                <a href="{% url 'BitacoraForm' %}" type="button" class="btn btn-primary mt-2">Agregar bitacora</a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+    <style>
+        /* Custom table styles */
+        
+        tr  th{
+            background-color: {{ user.empresa.visual_empresa.colorPrimario }};
+        }
+        .custom-table tbody tr:nth-child(odd) {
+            background-color: #f8f9fa;
+            color: black
+        }
+        th{
+            color:white
+        }
+
+        .custom-table tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        .pagination a {
+          color: #333;
+          text-decoration: none;
+          padding: 0.5rem;
+          border-radius: 3px;
+          background-color: #fff;
+          border: 1px solid #ddd;
+          margin-right: 0.5rem;
+        }
+
+        .pagination .current-page {
+          display: inline-block;
+          padding: 0.5rem;
+          margin: 0 5px;
+          background-color: {{ user.empresa.visual_empresa.colorPrimario }};
+          color: white;
+          border-radius: 3px;
+        }
+        .table td, .table th{
+          padding-top:0rem;
+          padding-bottom:0rem;
+        }
+
+    </style>
+{% endblock %}

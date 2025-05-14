@@ -1,0 +1,51 @@
+{% extends "AppCrud/formularios.html" %}
+{% block titulo %} <h1 class="text-center">Crear Bitacora</h1> {% endblock %}
+{% block formulario %} 
+    {% csrf_token %}
+    {{ formulario.as_p }}
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var selectedPeriodo = document.getElementById('id_periodo_4');
+
+            // If initial value is 'Other', enable other_periodo field
+            if (selectedPeriodo.checked === true) {
+                document.getElementById('id_other_periodo').disabled = false;
+            }
+
+            // On change event of periodo field
+            $('#id_periodo').on('change', function() {
+                var selectedPeriodo = document.getElementById('id_periodo_4');
+                
+                // If selected value is 'Other', enable other_periodo field
+                if (selectedPeriodo.checked === true) {
+                    console.log("HOLA");
+                    $('#id_other_periodo').prop('disabled', false);
+                }
+                // If selected value is not 'Other', disable other_periodo field
+                else {
+                    $('#id_other_periodo').prop('disabled', true);
+                }
+            });
+
+             // On change event of job field
+            $('#id_job').on('change', function() {
+                var selectedJobId = $(this).val();
+
+                // Make an AJAX request to fetch the job description
+                $.ajax({
+                url: '/AppCrud/get_job_description/',
+                type: 'GET',
+                data: { job_id: selectedJobId },
+                success: function(response) {
+                    // Update the description field with the received description
+                    $('#id_descripcion').val(response.description);
+                },
+                error: function(xhr, textStatus, error) {
+                    console.log('Error:', error);
+                }
+                });
+            });
+            });
+    </script>
+{% endblock %}
