@@ -65,6 +65,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'AppCrud.context_processors.lista_usuarios',
             ],
         },
     },
@@ -144,4 +145,7 @@ EMAIL_HOST_USER = 'aplicaciones.exerom@gmail.com'  # tu dirección de correo ele
 EMAIL_HOST_PASSWORD = 'ocwmzuyovxazsnxc'  # tu contraseña de correo electrónico
 EMAIL_USE_SSL = True
 DEFAULT_FROM_EMAIL = "Aplicaciones Exerom: aplicaciones@exerom.com"
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
+SESSION_COOKIE_AGE = 1000  # Opcional:
 
+LOGIN_URL = '/AppCrud/login/'  # Cambia esta URL según tu configuración

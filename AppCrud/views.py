@@ -12,13 +12,22 @@ from django.contrib.auth.decorators import login_required, permission_required
 from django.core.exceptions import PermissionDenied
 from django.shortcuts import render
 from django.db.models import Q
+from django.contrib.auth import login , get_user_model
 
 
 
 def inicio(request):
     mensaje = request.GET.get('mensaje', '')
-    
-    return render (request, "AppCrud/inicio.html", {"mensaje":mensaje})
+    user = request.user
+    admin = 0
+
+    if user.is_staff or user.is_superuser:
+        admin = 1
+        request.session['admin'] = True  # Add 'admin' to session storage
+    else:
+        request.session['admin'] = False  # Ensure 'admin' is False for non-staff users
+
+    return render(request, "AppCrud/inicio.html", {"mensaje": mensaje, "admin": admin})
 
 def filtrar_jobs(request,jobs):
     query = Q()
@@ -757,3 +766,30 @@ def editar_servidor(request, servidor_id):
     else:
         form = ServidorForm(instance=servidor)
     return render(request, 'AppCrud/editarServidor.html', {'form': form, 'servidor': servidor})
+
+
+@login_required
+def cambiar_usuario(request):
+    User = get_user_model()
+    if request.method == "POST":
+        user_id = request.POST.get("user_id")
+        print("el usuario es : ",user_id)
+        try:
+            nuevo_usuario = User.objects.get(id=user_id)
+            login(request, nuevo_usuario)
+            request.session['admin'] = True
+        except User.DoesNotExist:
+            pass
+    # return redirect('inicio') 
+    admin = 1
+    # users = lista_usuarios(request)  # Pass the request argument here
+    return render(request, "AppCrud/inicio.html", {
+        "admin": admin, 
+        'users': User.objects.all() # Pass the dictionary of users
+    })
+    
+
+@login_required
+def logout_request(request):
+    logout(request)
+    return redirect('Login')
