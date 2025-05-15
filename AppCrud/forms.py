@@ -27,7 +27,7 @@ class EmpresaVisualForm(forms.ModelForm):
 
     colorPrimario = forms.CharField(widget=forms.TextInput(attrs={'type': 'color'}))
     colorSecundario = forms.CharField(widget=forms.TextInput(attrs={'type': 'color'}))
-    logo = forms.ImageField(required=False)
+    logo = forms.ImageField(required=True)  # Cambiado a obligatorio
 
 
 class ContactoForm(forms.Form):
@@ -194,11 +194,10 @@ class RegistroForm(forms.ModelForm):
 class ServidorForm(forms.ModelForm):
     class Meta:
         model = Servidor
-        fields = ['nombre', 'empresa', 'registos']
+        fields = ['nombre', 'registos']  # Quita 'empresa' de los fields
         widgets = {
             'nombre': forms.TextInput(attrs={'class': 'form-control'}),
-            'empresa': forms.Select(attrs={'class': 'form-control'}),
-            'registos': forms.SelectMultiple(attrs={'class': 'form-control'}),
+            'registos': forms.CheckboxSelectMultiple(),
         }
 
 

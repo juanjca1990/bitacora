@@ -43,5 +43,12 @@ urlpatterns = [
     
     path('registros', registros, name='registros'),
     path('registroForm/', registroForm, name="RegistroForm"),
+    path('registro/borrar/<int:id>/', borrarRegistro, name='borrar_registro'),
+    
+    path('servidores/', servidores, name='servidores'),
+    path('servidorForm/', servidorForm, name='ServidorForm'),
+    path('servidor/borrar/<int:id>/', borrarServidor, name='borrar_servidor'),
+    path('servidor/<int:servidor_id>/quitar_registro/<int:registro_id>/', quitar_registro_servidor, name='quitar_registro_servidor'),
+    path('servidores/editar/<int:servidor_id>/', editar_servidor, name='editarServidor'),
     
 ]

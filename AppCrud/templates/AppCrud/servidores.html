@@ -1,0 +1,54 @@
+{% extends "AppCrud/padre.html" %}
+
+{% block title %}Lista de Servidores{% endblock %}
+
+{% block bloque %}
+<div class="container mt-5">
+    <h1 class="text-center">Lista de Servidores</h1>
+    <div class="text-end mb-3">
+        <a href="{% url 'ServidorForm' %}" class="btn btn-primary">Dar de Alta Servidor</a>
+    </div>
+    <table class="table table-bordered table-striped mt-3">
+        <thead class="bg-light">
+            <tr>
+                <th>Nombre</th>
+                <th>Empresa</th>
+                <th>Registros</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in servidores_con_registros %}
+            <tr>
+                <td>{{ item.servidor.nombre }}</td>
+                <td>{{ item.servidor.empresa.nombre }}</td>
+                <td style="max-width: 200px; overflow-y: auto;">
+                    {% if item.servidor.registos.all %}
+                        <ul class="mb-0" style="padding-left: 18px; max-height: 120px; overflow-y: auto;">
+                            {% for reg in item.servidor.registos.all %}
+                                <li class="d-flex justify-content-between align-items-center">
+                                    <span>{{ reg.nombre }}</span>
+                                    <form action="{% url 'quitar_registro_servidor' item.servidor.id reg.id %}" method="post" style="display:inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" onclick="return confirm('¿Seguro que quieres eliminar este registro del servidor?');" class="btn btn-sm btn-danger ms-2" title="Quitar de este servidor">✕</button>
+                                    </form>
+                                </li>
+                            {% endfor %}
+                        </ul>
+                    {% else %}
+                        <span class="text-muted">Sin registros</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <form action="{% url 'borrar_servidor' item.servidor.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('¿Seguro que quieres eliminar este servidor?');">Eliminar</button>
+                    </form>
+                    <a href="{% url 'editarServidor' item.servidor.id %}" class="btn btn-success btn-sm ms-2">Editar</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
