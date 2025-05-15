@@ -51,4 +51,7 @@ urlpatterns = [
     path('servidor/<int:servidor_id>/quitar_registro/<int:registro_id>/', quitar_registro_servidor, name='quitar_registro_servidor'),
     path('servidores/editar/<int:servidor_id>/', editar_servidor, name='editarServidor'),
     
+    path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
+    path('logout/', logout_request, name='Logout'),
+    
 ]
