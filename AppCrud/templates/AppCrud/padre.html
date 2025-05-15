@@ -34,8 +34,13 @@
                 <ul class="navbar-nav ml-auto">
                     {% if user.is_authenticated %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'Registros' %}">Registros</a>
+                            <a class="nav-link" href="{% url 'registros' %}">Registros</a>
                         </li>
+                        {% if not user.is_superuser %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'servidores' %}">Servidores</a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'bitacora' %}">Bitacoras</a>
                         </li>

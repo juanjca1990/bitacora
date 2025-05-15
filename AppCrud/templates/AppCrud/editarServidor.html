@@ -1,0 +1,15 @@
+{% extends "AppCrud/padre.html" %}
+
+{% block title %}Editar Servidor{% endblock %}
+
+{% block bloque %}
+<div class="container mt-5">
+    <h2>Editar Servidor: {{ servidor.nombre }}</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+        <a href="{% url 'servidores' %}" class="btn btn-secondary">Cancelar</a>
+    </form>
+</div>
+{% endblock %}

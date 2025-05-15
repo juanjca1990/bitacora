@@ -14,17 +14,22 @@
     <table class="table table-bordered table-striped mt-3">
         <thead class="bg-light">
             <tr>
-                <th scope="col">ID</th>
                 <th scope="col">Nombre</th>
                 <th scope="col">Descripción</th>
+                <th scope="col">Acciones</th>
             </tr>
         </thead>
         <tbody>
             {% for registro in registros %}
             <tr>
-                <td>{{ registro.id }}</td>
                 <td>{{ registro.nombre }}</td>
                 <td>{{ registro.descripcion }}</td>
+                <td>
+                    <form action="{% url 'borrar_registro' registro.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" onclick="return confirm('¿Seguro que quieres eliminar este registro?');">Eliminar</button>
+                    </form>
+                </td>
             </tr>
             {% endfor %}
         </tbody>
