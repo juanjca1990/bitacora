@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
 from colorfield.fields import ColorField
+from django.utils.timezone import now
 
 
     
@@ -30,7 +31,25 @@ class Servidor(models.Model):
     registos = models.ManyToManyField(Registro, blank=True)
     def __str__(self):
         return f"{self.nombre} - {self.empresa.nombre} - {self.registos.all()}"
+    
+class Estado(models.Model):
+    OPCIONES_VERIFICACION = [
+        ('desconocido', 'desconocido'),
+        ('bien', 'Bien'),
+        ('fallo', 'Fallo'),
+        ('no_verificado', 'No Verificado'),
+    ]
+    tipo_verificacion = models.CharField(max_length=20, choices=OPCIONES_VERIFICACION, default='none')
+    descripcion = models.TextField(blank=True, null=True)
+    registro_verificado = models.ForeignKey(Registro, on_delete=models.CASCADE, related_name="estados")
+    fecha = models.DateField(default=now)
+    servidor = models.ForeignKey(Servidor, on_delete=models.CASCADE, related_name="estados")
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, related_name="estados")
+    class Meta:
+        unique_together = ('registro_verificado', 'fecha', 'empresa', 'servidor') # registro por fecha y por empresa
 
+    def __str__(self):
+        return f"{self.registro_verificado.nombre} - {self.tipo_verificacion} - {self.fecha}"
 
 class User(AbstractUser):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, null=True, blank=True)  # Permitir nulos

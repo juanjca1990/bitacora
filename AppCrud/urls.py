@@ -54,4 +54,14 @@ urlpatterns = [
     path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
     path('logout/', logout_request, name='Logout'),
     
+     path('monitoreo/<str:hoy>/', monitoreo, name='monitoreo'),
+    path('obtener_fecha/', obtener_fecha, name='obtener_fecha'),
+    
+    
+    path('registrarEstado/', registrarEstado, name='registrarEstado'),
+    path('registrarDescripcion/', registrarDescripcion, name='registrarDescripcion'),
+    path('imprimirRegistroMes/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMes, name="imprimirRegistroMes"),
+    path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
+    path('cambiarFechaMonitor/',cambiarFechaMonitor, name='cambiarFechaMonitor'),
+    
 ]
