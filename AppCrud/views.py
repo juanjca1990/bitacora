@@ -1,6 +1,9 @@
+from collections import defaultdict
+import datetime
+import locale
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
-from AppCrud.models import Job, Contacto, Aviso, Bitacora, Empresa, Registro,Servidor, User, VisualEmpresa
+from AppCrud.models import Estado, Job, Contacto, Aviso, Bitacora, Empresa, Registro,Servidor, User, VisualEmpresa
 from AppCrud.forms import JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, RegistroForm,RegistroUsuarioForm, ServidorForm, UserEditForm, EmpresaVisualForm
 
 from django.core.paginator import Paginator
@@ -14,7 +17,11 @@ from django.shortcuts import render
 from django.db.models import Q
 from django.contrib.auth import login , get_user_model
 
-
+from django.utils.timezone import now
+from dateutil.relativedelta import relativedelta
+from datetime import date, datetime, timedelta
+import json
+from django.views.decorators.csrf import csrf_exempt
 
 def inicio(request):
     mensaje = request.GET.get('mensaje', '')
@@ -793,3 +800,252 @@ def cambiar_usuario(request):
 def logout_request(request):
     logout(request)
     return redirect('Login')
+
+
+def obtener_fecha(request):
+    hoy = now().date()
+    return redirect('monitoreo', hoy=hoy)
+
+def cambiarFechaMonitor(request):
+    mes = int(request.GET.get('mes', date.today().month))
+    anio = int(request.GET.get('anio', date.today().year))
+    
+    print("El mes:", mes)
+    print("El anio:", anio)
+
+    # Crear la nueva fecha con el primer día del mes
+    nueva_fecha = date(anio, mes, 1)
+    
+    print("La nueva fecha:", nueva_fecha)
+
+    return redirect('monitoreo', hoy=nueva_fecha.strftime("%Y-%m-%d"))
+
+@login_required
+def monitoreo(request, hoy):
+    usuario = request.user
+    empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
+    
+    servidores = Servidor.objects.filter(empresa=empresa)
+
+    hoy = datetime.strptime(hoy, "%Y-%m-%d").date()
+    primer_dia = hoy.replace(day=1)
+    ultimo_dia = (primer_dia + relativedelta(months=1)) - timedelta(days=1)
+
+    dias_mes = [
+        dia for dia in (primer_dia + timedelta(days=i) for i in range((ultimo_dia - primer_dia).days + 1))
+    ]
+
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    except locale.Error:
+        locale.setlocale(locale.LC_TIME, '')
+
+    dias_semana = [dia.strftime('%A')[0].upper() for dia in dias_mes]
+
+    estados = Estado.objects.filter(fecha__range=(primer_dia, ultimo_dia), empresa=empresa).select_related('registro_verificado')
+
+    estados_dict = defaultdict(lambda: defaultdict(dict))
+    for estado in estados:
+        estados_dict[estado.servidor.id][estado.registro_verificado.id][estado.fecha] = estado
+
+    registros_por_servidor = defaultdict(list)
+
+    for servidor in servidores:
+        for registro in servidor.registos.all():
+            fila = {
+                "registro": registro,
+                "estados": [
+                    estados_dict[servidor.id][registro.id].get(dia, None)
+                    for dia in dias_mes
+                ]
+            }
+            registros_por_servidor[servidor].append(fila)  # <-- usa el objeto, no el nombre
+
+# Ordenar por nombre de servidor
+    registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
+
+    dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
+
+    mes_anterior = (primer_dia - relativedelta(months=1)).month
+    anio_anterior = (primer_dia - relativedelta(months=1)).year
+    mes_siguiente = (primer_dia + relativedelta(months=1)).month
+    anio_siguiente = (primer_dia + relativedelta(months=1)).year
+    
+    mes = hoy.month
+    anio = hoy.year
+
+    dias = list(zip(dias_mes, dias_semana))
+
+    return render(request, "AppCrud/monitoreo.html", {
+        "registros_por_servidor": registros_por_servidor,
+        "dias_mes": dias_mes,
+        "dias": dias,
+        "dias_semana": dias_semana,
+        "dias_no_modificables": dias_no_modificables,
+        "mes": mes,
+        "anio": anio,
+        "mes_anterior": mes_anterior,
+        "anio_anterior": anio_anterior,
+        "mes_siguiente": mes_siguiente,
+        "anio_siguiente": anio_siguiente,
+        "empresa": empresa,
+    })
+
+@csrf_exempt
+def registrarEstado(request):
+    print("Estoy en registrarEstado")
+    if request.method == "POST":
+        try:
+            print("Estoy en el try de registrarEstado")
+            data = json.loads(request.body)
+            registro_id = data.get("registro_id")
+            print("registro_id:", registro_id)
+            fecha = data.get("fecha")
+            verificacion = data.get("tipo_verificacion")
+            print("tipo verificacion:", verificacion)
+            servidor_id = data.get("servidor_id")
+            print("servidor_id:", servidor_id)
+            empresa_id = data.get("empresa_id")
+            print("empresa_id:", empresa_id)
+
+            if not (registro_id and fecha and verificacion and servidor_id and empresa_id):
+                return JsonResponse({"success": False, "error": "Datos incompletos"})
+            
+            estado = Estado.objects.filter(
+                registro_verificado_id=registro_id,
+                fecha=fecha,
+                servidor_id=servidor_id,
+                empresa_id=empresa_id
+            ).first()
+            
+            if estado is not None:
+                # Si ya existe un estado para este registro, fecha y servidor, actualizamos el tipo de verificación
+                estado.tipo_verificacion = verificacion
+                estado.save()
+            else:
+                # Si no existe, creamos un nuevo estado
+                Estado.objects.create(
+                    registro_verificado_id=registro_id,
+                    servidor_id=servidor_id,
+                    empresa_id=empresa_id,
+                    fecha=fecha,
+                    tipo_verificacion=verificacion
+                )
+
+            return JsonResponse({"success": True})
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return JsonResponse({"success": False, "error": str(e)})
+
+    return JsonResponse({"success": False, "error": "Método no permitido"})
+
+@csrf_exempt
+def registrarDescripcion(request):
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            registro_id = data.get("registro_id")
+            print("registro_id:", registro_id)
+            fecha = data.get("fecha")
+            print("fecha:", fecha)
+            descripcion = data.get("descripcion", "")
+            print("descripcion:", descripcion)
+            servidor_id = data.get("servidor_id")
+            print("servidor_id:", servidor_id)
+            empresa_id = data.get("empresa_id")
+            print("empresa_id:", empresa_id)
+
+            if not (registro_id and fecha):
+                return JsonResponse({"success": False, "error": "Datos incompletos"})
+            
+            estado = Estado.objects.filter(
+                registro_verificado_id=registro_id,
+                servidor_id=servidor_id,
+                empresa_id=empresa_id,
+                fecha=fecha
+            ).first()
+            
+            if estado is not None:
+                print("Existe un estado para este registro, fecha y servidor, actualizando la descripción")
+                # Si ya existe un estado para este registro, fecha y servidor, actualizamos el tipo de verificación
+                estado.descripcion = descripcion
+                estado.save()
+            else:
+                print("No existe un estado para este registro, fecha y servidor, creando uno nuevo")
+            # Si no existe, creamos un nuevo estado con la descripción
+                estado_nuevo = Estado.objects.create(
+                    registro_verificado_id=registro_id,
+                    servidor_id=servidor_id,
+                    empresa_id=empresa_id,
+                    fecha=fecha,
+                    tipo_verificacion='desconocido',
+                    descripcion=descripcion
+                )
+                estado_nuevo.save()
+                
+
+            return JsonResponse({"success": True})
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return JsonResponse({"success": False, "error": str(e)})
+
+    return JsonResponse({"success": False, "error": "Método no permitido"})
+
+
+def imprimirRegistroMes(request, mes, anio, empresa_id):
+    pass
+    # empresa = get_object_or_404(Empresa, id=empresa_id)
+    # registros = RegistroMonitor.objects.filter(empresa=empresa)
+    # registros_especiales = RegistroMonitor.objects.filter(servidor__nombre__in=["EPE", "EQE", "EDE"] and Q(empresa=empresa))
+    # registros = registros | registros_especiales
+
+    # estados = Estado.objects.filter(
+    #     registro_verificado__in=registros,
+    #     fecha__year=anio,
+    #     fecha__month=mes,
+    # ).filter(
+    #     Q(tipo_verificacion="fallo") | Q(descripcion__isnull=False)  # Filtrar solo estados con "fallo" o descripción no nula
+    # ).select_related('registro_verificado', 'registro_verificado__servidor')
+
+
+
+    # buffer = io.BytesIO()
+    # pdf = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
+
+    # styles = getSampleStyleSheet()
+    # styleN = styles["Normal"]
+
+    # data = [["Registro", "Descripción", "Servidor", "Comentario", "Estado", "Fecha"]]
+
+    # for estado in estados:
+    #     data.append([
+    #         Paragraph(estado.registro_verificado.nombre if estado.registro_verificado.nombre else "", styleN),
+    #         Paragraph(estado.registro_verificado.descripcion if estado.registro_verificado.descripcion else "", styleN),
+    #         Paragraph(estado.registro_verificado.servidor.nombre if estado.registro_verificado.servidor.nombre else "", styleN),
+    #         Paragraph(estado.descripcion if estado.descripcion else "", styleN),
+    #         Paragraph(estado.tipo_verificacion.capitalize() if estado.tipo_verificacion else "", styleN),
+    #         Paragraph(estado.fecha.strftime("%d-%m-%Y") if estado.fecha else "", styleN),
+    #     ])
+
+    # table = Table(data, colWidths=[80, 250, 80, 200, 80, 80])
+
+    # table.setStyle(TableStyle([
+    #     ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+    #     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+    #     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+    #     ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+    #     ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+    #     ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+    #     ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    #     ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+    #     ('TOPPADDING', (0, 1), (-1, -1), 6),
+    #     ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+    # ]))
+
+    # elements = [table]
+    # pdf.build(elements)
+
+    # buffer.seek(0)
+    # return FileResponse(buffer, as_attachment=True, filename=f"Registro_{mes}_{anio}.pdf")
