@@ -824,8 +824,13 @@ def cambiarFechaMonitor(request):
 def monitoreo(request, hoy):
     usuario = request.user
     empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
-    
     servidores = Servidor.objects.filter(empresa=empresa)
+
+    servidor_id = request.GET.get('servidor_id')
+    if not servidor_id and servidores.exists():
+        servidor_id = servidores.first().id
+    if servidor_id:
+        servidores = servidores.filter(id=servidor_id)
 
     hoy = datetime.strptime(hoy, "%Y-%m-%d").date()
     primer_dia = hoy.replace(day=1)
@@ -859,9 +864,8 @@ def monitoreo(request, hoy):
                     for dia in dias_mes
                 ]
             }
-            registros_por_servidor[servidor].append(fila)  # <-- usa el objeto, no el nombre
+            registros_por_servidor[servidor].append(fila)
 
-# Ordenar por nombre de servidor
     registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
 
     dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
@@ -870,7 +874,7 @@ def monitoreo(request, hoy):
     anio_anterior = (primer_dia - relativedelta(months=1)).year
     mes_siguiente = (primer_dia + relativedelta(months=1)).month
     anio_siguiente = (primer_dia + relativedelta(months=1)).year
-    
+
     mes = hoy.month
     anio = hoy.year
 
@@ -889,6 +893,8 @@ def monitoreo(request, hoy):
         "mes_siguiente": mes_siguiente,
         "anio_siguiente": anio_siguiente,
         "empresa": empresa,
+        "servidores": Servidor.objects.filter(empresa=empresa),
+        "servidor_id": int(servidor_id) if servidor_id else None,
     })
 
 @csrf_exempt
