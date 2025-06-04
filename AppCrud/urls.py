@@ -54,7 +54,9 @@ urlpatterns = [
     path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
     path('logout/', logout_request, name='Logout'),
     
-     path('monitoreo/<str:hoy>/', monitoreo, name='monitoreo'),
+    path('monitoreo/<str:hoy>/', monitoreo, name='monitoreo'),
+    # path('monitoreo/<str:hoy>/', monitoreo_admin, name='monitoreo_admin'),
+    # path('obtener_fecha_monitor_admin/', obtener_fecha_monitor_admin, name='obtener_fecha_monitor_admin'),
     path('obtener_fecha/', obtener_fecha, name='obtener_fecha'),
     
     

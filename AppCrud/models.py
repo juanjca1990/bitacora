@@ -34,10 +34,10 @@ class Servidor(models.Model):
     
 class Estado(models.Model):
     OPCIONES_VERIFICACION = [
-        ('desconocido', 'desconocido'),
+        ('no_verificado', 'No Verificado'),
         ('bien', 'Bien'),
         ('fallo', 'Fallo'),
-        ('no_verificado', 'No Verificado'),
+        ('pendiente', 'Verificación Pendiente'),
     ]
     tipo_verificacion = models.CharField(max_length=20, choices=OPCIONES_VERIFICACION, default='none')
     descripcion = models.TextField(blank=True, null=True)
