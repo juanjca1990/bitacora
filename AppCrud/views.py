@@ -22,6 +22,13 @@ from dateutil.relativedelta import relativedelta
 from datetime import date, datetime, timedelta
 import json
 from django.views.decorators.csrf import csrf_exempt
+from django.http import FileResponse
+from django.shortcuts import get_object_or_404
+from reportlab.lib.pagesizes import landscape, letter
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib.styles import getSampleStyleSheet
+from reportlab.lib import colors
+import io
 
 def inicio(request):
     mensaje = request.GET.get('mensaje', '')
@@ -806,6 +813,7 @@ def obtener_fecha(request):
     hoy = now().date()
     return redirect('monitoreo', hoy=hoy)
 
+
 def cambiarFechaMonitor(request):
     mes = int(request.GET.get('mes', date.today().month))
     anio = int(request.GET.get('anio', date.today().year))
@@ -819,6 +827,99 @@ def cambiarFechaMonitor(request):
     print("La nueva fecha:", nueva_fecha)
 
     return redirect('monitoreo', hoy=nueva_fecha.strftime("%Y-%m-%d"))
+
+# def obtener_fecha_monitor_admin(request):
+#     hoy = now().date()
+#     return redirect('monitoreo_admin', hoy=hoy)
+
+
+# @login_required
+# def monitoreo_admin(request, hoy):
+#     usuario = request.user
+#     empresas = Empresa.objects.all().order_by('nombre')
+
+#     # Obtener empresa seleccionada o la primera por defecto
+#     empresa_id = request.GET.get('empresa_id')
+#     if not empresa_id and empresas.exists():
+#         empresa = empresas.first()
+#         empresa_id = empresa.id
+#     else:
+#         empresa = Empresa.objects.get(id=empresa_id)
+
+#     servidores = Servidor.objects.filter(empresa=empresa)
+
+#     # Obtener servidor seleccionado o el primero por defecto
+#     servidor_id = request.GET.get('servidor_id')
+#     if not servidor_id and servidores.exists():
+#         servidor_id = servidores.first().id
+#     if servidor_id:
+#         servidores = servidores.filter(id=servidor_id)
+
+#     hoy = datetime.strptime(hoy, "%Y-%m-%d").date()
+#     primer_dia = hoy.replace(day=1)
+#     ultimo_dia = (primer_dia + relativedelta(months=1)) - timedelta(days=1)
+
+#     dias_mes = [
+#         dia for dia in (primer_dia + timedelta(days=i) for i in range((ultimo_dia - primer_dia).days + 1))
+#     ]
+
+#     try:
+#         locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+#     except locale.Error:
+#         locale.setlocale(locale.LC_TIME, '')
+
+#     dias_semana = [dia.strftime('%A')[0].upper() for dia in dias_mes]
+
+#     estados = Estado.objects.filter(fecha__range=(primer_dia, ultimo_dia), empresa=empresa).select_related('registro_verificado')
+
+#     estados_dict = defaultdict(lambda: defaultdict(dict))
+#     for estado in estados:
+#         estados_dict[estado.servidor.id][estado.registro_verificado.id][estado.fecha] = estado
+
+#     registros_por_servidor = defaultdict(list)
+
+#     for servidor in servidores:
+#         for registro in servidor.registos.all():
+#             fila = {
+#                 "registro": registro,
+#                 "estados": [
+#                     estados_dict[servidor.id][registro.id].get(dia, None)
+#                     for dia in dias_mes
+#                 ]
+#             }
+#             registros_por_servidor[servidor].append(fila)
+
+#     registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
+
+#     dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
+
+#     mes_anterior = (primer_dia - relativedelta(months=1)).month
+#     anio_anterior = (primer_dia - relativedelta(months=1)).year
+#     mes_siguiente = (primer_dia + relativedelta(months=1)).month
+#     anio_siguiente = (primer_dia + relativedelta(months=1)).year
+
+#     mes = hoy.month
+#     anio = hoy.year
+
+#     dias = list(zip(dias_mes, dias_semana))
+
+#     return render(request, "AppCrud/monitoreo_admin.html", {
+#         "empresas": empresas,
+#         "empresa": empresa,
+#         "servidores": Servidor.objects.filter(empresa=empresa),
+#         "servidor_id": int(servidor_id) if servidor_id else None,
+#         "registros_por_servidor": registros_por_servidor,
+#         "dias_mes": dias_mes,
+#         "dias": dias,
+#         "dias_semana": dias_semana,
+#         "dias_no_modificables": dias_no_modificables,
+#         "mes": mes,
+#         "anio": anio,
+#         "mes_anterior": mes_anterior,
+#         "anio_anterior": anio_anterior,
+#         "mes_siguiente": mes_siguiente,
+#         "anio_siguiente": anio_siguiente,
+#     })
 
 @login_required
 def monitoreo(request, hoy):
@@ -1001,57 +1102,62 @@ def registrarDescripcion(request):
 
 
 def imprimirRegistroMes(request, mes, anio, empresa_id):
-    pass
-    # empresa = get_object_or_404(Empresa, id=empresa_id)
-    # registros = RegistroMonitor.objects.filter(empresa=empresa)
-    # registros_especiales = RegistroMonitor.objects.filter(servidor__nombre__in=["EPE", "EQE", "EDE"] and Q(empresa=empresa))
-    # registros = registros | registros_especiales
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    servidores = Servidor.objects.filter(empresa=empresa)
+    registros = Registro.objects.filter(servidor__in=servidores)
 
-    # estados = Estado.objects.filter(
-    #     registro_verificado__in=registros,
-    #     fecha__year=anio,
-    #     fecha__month=mes,
-    # ).filter(
-    #     Q(tipo_verificacion="fallo") | Q(descripcion__isnull=False)  # Filtrar solo estados con "fallo" o descripción no nula
-    # ).select_related('registro_verificado', 'registro_verificado__servidor')
+    # Filtrar estados con "fallo" o que tengan algún comentario (descripcion no vacía)
+    estados = Estado.objects.filter(
+        registro_verificado__in=registros,
+        fecha__year=anio,
+        fecha__month=mes
+    ).filter(
+        Q(tipo_verificacion="fallo") | (~Q(descripcion__isnull=True) & ~Q(descripcion__exact=""))
+    ).select_related('registro_verificado', 'servidor')
 
+    # Ordenar por servidor, luego por registro y luego por fecha
+    estados = estados.order_by('servidor__nombre', 'registro_verificado__nombre', 'fecha')
 
+    buffer = io.BytesIO()
+    pdf = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
 
-    # buffer = io.BytesIO()
-    # pdf = SimpleDocTemplate(buffer, pagesize=landscape(letter), rightMargin=20, leftMargin=20, topMargin=20, bottomMargin=20)
+    styles = getSampleStyleSheet()
+    styleN = styles["Normal"]
+    styleTitle = styles["Title"]
 
-    # styles = getSampleStyleSheet()
-    # styleN = styles["Normal"]
+    # Título con el nombre de la empresa
+    from reportlab.platypus import Spacer
+    elements = [Paragraph(str(empresa.nombre), styleTitle), Spacer(1, 12)]
 
-    # data = [["Registro", "Descripción", "Servidor", "Comentario", "Estado", "Fecha"]]
+    data = [["Servidor", "Registro", "Descripción", "Comentario", "Estado", "Fecha"]]
 
-    # for estado in estados:
-    #     data.append([
-    #         Paragraph(estado.registro_verificado.nombre if estado.registro_verificado.nombre else "", styleN),
-    #         Paragraph(estado.registro_verificado.descripcion if estado.registro_verificado.descripcion else "", styleN),
-    #         Paragraph(estado.registro_verificado.servidor.nombre if estado.registro_verificado.servidor.nombre else "", styleN),
-    #         Paragraph(estado.descripcion if estado.descripcion else "", styleN),
-    #         Paragraph(estado.tipo_verificacion.capitalize() if estado.tipo_verificacion else "", styleN),
-    #         Paragraph(estado.fecha.strftime("%d-%m-%Y") if estado.fecha else "", styleN),
-    #     ])
+    for estado in estados:
+        data.append([
+            Paragraph(estado.servidor.nombre or "", styleN),
+            Paragraph(estado.registro_verificado.nombre or "", styleN),
+            Paragraph(estado.registro_verificado.descripcion or "", styleN),
+            Paragraph(estado.descripcion or "", styleN),
+            Paragraph(estado.tipo_verificacion.capitalize() if estado.tipo_verificacion else "", styleN),
+            Paragraph(estado.fecha.strftime("%d-%m-%Y") if estado.fecha else "", styleN),
+        ])
 
-    # table = Table(data, colWidths=[80, 250, 80, 200, 80, 80])
+    table = Table(data, colWidths=[80, 80, 200, 200, 80, 80])
 
-    # table.setStyle(TableStyle([
-    #     ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-    #     ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-    #     ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-    #     ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-    #     ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-    #     ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-    #     ('GRID', (0, 0), (-1, -1), 1, colors.black),
-    #     ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
-    #     ('TOPPADDING', (0, 1), (-1, -1), 6),
-    #     ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
-    # ]))
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+        ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
+        ('TOPPADDING', (0, 1), (-1, -1), 6),
+        ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+    ]))
 
-    # elements = [table]
-    # pdf.build(elements)
+    elements.append(table)
+    pdf.build(elements)
 
-    # buffer.seek(0)
-    # return FileResponse(buffer, as_attachment=True, filename=f"Registro_{mes}_{anio}.pdf")
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename=f"Registro_{mes}_{anio}.pdf")

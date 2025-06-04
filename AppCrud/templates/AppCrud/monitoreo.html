@@ -106,9 +106,9 @@
                                         <i class="fas 
                                             {% if estado %}
                                                 {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
-                                                {% elif estado.tipo_verificacion == 'desconocido' %}fa-circle icono-vacio
+                                                {% elif estado.tipo_verificacion == 'no_verificado' %}fa-circle icono-vacio
                                                 {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
-                                                {% elif estado.tipo_verificacion == 'no_verificado' %}fa-exclamation-circle icono-amarillo
+                                                {% elif estado.tipo_verificacion == 'pendiente' %}fa-exclamation-circle icono-amarillo
                                                 {% endif %}
                                             {% else %}
                                                 fa-circle icono-vacio
@@ -154,10 +154,10 @@
     function cambiarEstado(elemento, registroId, fecha) {
         let icono = elemento.querySelector("i");
         let estados = [
-            { clase: "fa-circle icono-vacio", valor: "desconocido" },
+            { clase: "fa-circle icono-vacio", valor: "no_verificado" },
             { clase: "fa-check-circle icono-verde", valor: "bien" },
             { clase: "fa-times-circle icono-rojo", valor: "fallo" },
-            { clase: "fa-exclamation-circle icono-amarillo", valor: "no_verificado" }
+            { clase: "fa-exclamation-circle icono-amarillo", valor: "pendiente" }
         ];
         let indexActual = estados.findIndex(e => icono.className.includes(e.clase.split(" ")[0]));
         let nuevoIndex = (indexActual + 1) % estados.length;
