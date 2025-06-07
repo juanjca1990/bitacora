@@ -3,6 +3,7 @@ import datetime
 import locale
 from django.http import JsonResponse
 from django.shortcuts import render, redirect
+from django.urls import reverse
 from AppCrud.models import Estado, Job, Contacto, Aviso, Bitacora, Empresa, Registro,Servidor, User, VisualEmpresa
 from AppCrud.forms import JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, RegistroForm,RegistroUsuarioForm, ServidorForm, UserEditForm, EmpresaVisualForm
 
@@ -702,7 +703,7 @@ def obtener_mails_y_nombres(job):
     return(emails, nombres)
 
 
-def registros(request):
+def transacciones(request):
     registros = Registro.objects.all()
     return render(request, "AppCrud/registros.html", {"registros": registros})
 
@@ -714,7 +715,7 @@ def registroForm(request):
             registro = Registro(nombre=form.cleaned_data.get("nombre"),
                                descripcion=form.cleaned_data.get("descripcion"))
             registro.save()
-            return redirect('registros')
+            return redirect('transacciones')
     else:
         form = RegistroForm()
     return render(request, "AppCrud/registroForm.html", {"formulario": form})
@@ -723,7 +724,7 @@ def registroForm(request):
 def borrarRegistro(request, id):
     registro = Registro.objects.get(id=id)
     registro.delete()
-    return redirect('registros')
+    return redirect('transacciones')
 
 @login_required
 # @permission_required('AppCrud.view_servidor', raise_exception=True)
@@ -811,119 +812,132 @@ def logout_request(request):
 
 def obtener_fecha(request):
     hoy = now().date()
+    print("voy a monitoreo")
     return redirect('monitoreo', hoy=hoy)
 
 
 def cambiarFechaMonitor(request):
     mes = int(request.GET.get('mes', date.today().month))
     anio = int(request.GET.get('anio', date.today().year))
-    
-    print("El mes:", mes)
-    print("El anio:", anio)
+    empresa_id = request.GET.get('empresa_id')
+    servidor_id = request.GET.get('servidor_id')
+    admin = request.GET.get('admin')
 
-    # Crear la nueva fecha con el primer día del mes
     nueva_fecha = date(anio, mes, 1)
+
+    if admin == "1":
+        url = reverse('monitoreo_admin', args=[nueva_fecha.strftime("%Y-%m-%d")])
+        params = f"?empresa_id={empresa_id}"
+        if servidor_id:
+            params += f"&servidor_id={servidor_id}"
+        return redirect(url + params)
+    else:
+        url = reverse('monitoreo', args=[nueva_fecha.strftime("%Y-%m-%d")])
+        params = ""
+        if servidor_id:
+            params = f"?servidor_id={servidor_id}"
+        return redirect(url + params)
     
-    print("La nueva fecha:", nueva_fecha)
-
-    return redirect('monitoreo', hoy=nueva_fecha.strftime("%Y-%m-%d"))
-
-# def obtener_fecha_monitor_admin(request):
-#     hoy = now().date()
-#     return redirect('monitoreo_admin', hoy=hoy)
+    
+def obtener_fecha_monitor_admin(request):
+    hoy = now().date()
+    print("voy a monitoreo admin")
+    return redirect('monitoreo_admin', hoy=hoy)
 
 
-# @login_required
-# def monitoreo_admin(request, hoy):
-#     usuario = request.user
-#     empresas = Empresa.objects.all().order_by('nombre')
+@login_required
+def monitoreo_admin(request, hoy):
+    print("estoyt en ADMIIIIIIIIIIIIN")
+    empresas = Empresa.objects.all().order_by('nombre')
+    empresa_id = request.GET.get('empresa_id')
+    if empresa_id:
+        empresa = Empresa.objects.get(id=empresa_id)
+    else:
+        empresa = empresas.first()
+        empresa_id = empresa.id if empresa else None
 
-#     # Obtener empresa seleccionada o la primera por defecto
-#     empresa_id = request.GET.get('empresa_id')
-#     if not empresa_id and empresas.exists():
-#         empresa = empresas.first()
-#         empresa_id = empresa.id
-#     else:
-#         empresa = Empresa.objects.get(id=empresa_id)
+    # Obtén todos los servidores de la empresa seleccionada
+    todos_los_servidores = Servidor.objects.filter(empresa=empresa)
+    servidor_id = request.GET.get('servidor_id')
 
-#     servidores = Servidor.objects.filter(empresa=empresa)
+    # Si no hay servidor_id, selecciona el primero y filtra solo ese
+    if not servidor_id and todos_los_servidores.exists():
+        servidor_id = todos_los_servidores.first().id
+        servidores = todos_los_servidores.filter(id=servidor_id)
+    elif servidor_id:
+        servidores = todos_los_servidores.filter(id=servidor_id)
+    else:
+        servidores = todos_los_servidores.none()
 
-#     # Obtener servidor seleccionado o el primero por defecto
-#     servidor_id = request.GET.get('servidor_id')
-#     if not servidor_id and servidores.exists():
-#         servidor_id = servidores.first().id
-#     if servidor_id:
-#         servidores = servidores.filter(id=servidor_id)
+    hoy = datetime.strptime(hoy, "%Y-%m-%d").date()
+    primer_dia = hoy.replace(day=1)
+    ultimo_dia = (primer_dia + relativedelta(months=1)) - timedelta(days=1)
+    dias_mes = [
+        dia for dia in (primer_dia + timedelta(days=i) for i in range((ultimo_dia - primer_dia).days + 1))
+    ]
 
-#     hoy = datetime.strptime(hoy, "%Y-%m-%d").date()
-#     primer_dia = hoy.replace(day=1)
-#     ultimo_dia = (primer_dia + relativedelta(months=1)) - timedelta(days=1)
+    try:
+        locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
+    except locale.Error:
+        locale.setlocale(locale.LC_TIME, '')
 
-#     dias_mes = [
-#         dia for dia in (primer_dia + timedelta(days=i) for i in range((ultimo_dia - primer_dia).days + 1))
-#     ]
+    dias_semana = [dia.strftime('%A')[0].upper() for dia in dias_mes]
 
-#     try:
-#         locale.setlocale(locale.LC_TIME, 'es_ES.UTF-8')
-#     except locale.Error:
-#         locale.setlocale(locale.LC_TIME, '')
+    estados = Estado.objects.filter(fecha__range=(primer_dia, ultimo_dia), empresa=empresa).select_related('registro_verificado')
 
-#     dias_semana = [dia.strftime('%A')[0].upper() for dia in dias_mes]
+    estados_dict = defaultdict(lambda: defaultdict(dict))
+    for estado in estados:
+        estados_dict[estado.servidor.id][estado.registro_verificado.id][estado.fecha] = estado
 
-#     estados = Estado.objects.filter(fecha__range=(primer_dia, ultimo_dia), empresa=empresa).select_related('registro_verificado')
+    registros_por_servidor = defaultdict(list)
+    for servidor in servidores:
+        for registro in servidor.registos.all():
+            fila = {
+                "registro": registro,
+                "estados": [
+                    estados_dict[servidor.id][registro.id].get(dia, None)
+                    for dia in dias_mes
+                ]
+            }
+            registros_por_servidor[servidor].append(fila)
+    registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
 
-#     estados_dict = defaultdict(lambda: defaultdict(dict))
-#     for estado in estados:
-#         estados_dict[estado.servidor.id][estado.registro_verificado.id][estado.fecha] = estado
+    dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
+    mes_anterior = (primer_dia - relativedelta(months=1)).month
+    anio_anterior = (primer_dia - relativedelta(months=1)).year
+    mes_siguiente = (primer_dia + relativedelta(months=1)).month
+    anio_siguiente = (primer_dia + relativedelta(months=1)).year
+    mes = hoy.month
+    anio = hoy.year
+    dias = list(zip(dias_mes, dias_semana))
 
-#     registros_por_servidor = defaultdict(list)
-
-#     for servidor in servidores:
-#         for registro in servidor.registos.all():
-#             fila = {
-#                 "registro": registro,
-#                 "estados": [
-#                     estados_dict[servidor.id][registro.id].get(dia, None)
-#                     for dia in dias_mes
-#                 ]
-#             }
-#             registros_por_servidor[servidor].append(fila)
-
-#     registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
-
-#     dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
-
-#     mes_anterior = (primer_dia - relativedelta(months=1)).month
-#     anio_anterior = (primer_dia - relativedelta(months=1)).year
-#     mes_siguiente = (primer_dia + relativedelta(months=1)).month
-#     anio_siguiente = (primer_dia + relativedelta(months=1)).year
-
-#     mes = hoy.month
-#     anio = hoy.year
-
-#     dias = list(zip(dias_mes, dias_semana))
-
-#     return render(request, "AppCrud/monitoreo_admin.html", {
-#         "empresas": empresas,
-#         "empresa": empresa,
-#         "servidores": Servidor.objects.filter(empresa=empresa),
-#         "servidor_id": int(servidor_id) if servidor_id else None,
-#         "registros_por_servidor": registros_por_servidor,
-#         "dias_mes": dias_mes,
-#         "dias": dias,
-#         "dias_semana": dias_semana,
-#         "dias_no_modificables": dias_no_modificables,
-#         "mes": mes,
-#         "anio": anio,
-#         "mes_anterior": mes_anterior,
-#         "anio_anterior": anio_anterior,
-#         "mes_siguiente": mes_siguiente,
-#         "anio_siguiente": anio_siguiente,
-#     })
+    return render(request, "AppCrud/monitor_admin.html", {
+        "empresas": empresas,
+        "empresa": empresa,
+        "servidores": todos_los_servidores,  # Para el select, muestra todos los servidores de la empresa
+        "servidor_id": int(servidor_id) if servidor_id else None,
+        "registros_por_servidor": registros_por_servidor,
+        "dias_mes": dias_mes,
+        "dias": dias,
+        "dias_semana": dias_semana,
+        "dias_no_modificables": dias_no_modificables,
+        "mes": mes,
+        "anio": anio,
+        "mes_anterior": mes_anterior,
+        "anio_anterior": anio_anterior,
+        "mes_siguiente": mes_siguiente,
+        "anio_siguiente": anio_siguiente,
+        "empresa_id": int(empresa_id) if empresa_id else None,
+    })
 
 @login_required
 def monitoreo(request, hoy):
     usuario = request.user
+    if not usuario.empresa:
+        return render(request, "AppCrud/monitoreo.html", {
+            "error": "No tiene empresa asociada. Contacte al administrador."
+        })
+
     empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
     servidores = Servidor.objects.filter(empresa=empresa)
 

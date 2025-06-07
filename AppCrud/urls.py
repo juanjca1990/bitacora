@@ -41,7 +41,7 @@ urlpatterns = [
 
     path('avisar/<id>', avisar, name='avisar'),
     
-    path('registros', registros, name='registros'),
+    path('transacciones', transacciones, name='transacciones'),
     path('registroForm/', registroForm, name="RegistroForm"),
     path('registro/borrar/<int:id>/', borrarRegistro, name='borrar_registro'),
     
@@ -55,8 +55,8 @@ urlpatterns = [
     path('logout/', logout_request, name='Logout'),
     
     path('monitoreo/<str:hoy>/', monitoreo, name='monitoreo'),
-    # path('monitoreo/<str:hoy>/', monitoreo_admin, name='monitoreo_admin'),
-    # path('obtener_fecha_monitor_admin/', obtener_fecha_monitor_admin, name='obtener_fecha_monitor_admin'),
+    path('monitoreo_admin/<str:hoy>/', monitoreo_admin, name='monitoreo_admin'),
+    path('obtener_fecha_monitor_admin/', obtener_fecha_monitor_admin, name='obtener_fecha_monitor_admin'),
     path('obtener_fecha/', obtener_fecha, name='obtener_fecha'),
     
     

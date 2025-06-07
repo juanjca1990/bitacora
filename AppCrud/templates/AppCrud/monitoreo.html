@@ -82,7 +82,7 @@
                             {% endfor %}
                         </tr>
                         <tr>
-                            <th>Registro</th>
+                            <th>Transacciones</th>
                             {% for dia in dias_mes %}
                                 <th>{{ dia.day }}</th>
                             {% endfor %}
@@ -120,6 +120,7 @@
                                     <div>
                                         <button class="descripcion-btn {% if estado.descripcion %}descripcion-btn-azul{% endif %}"
                                             onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', '{{ estado.id }}', '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
+                                            <i class="fas fa-comment"></i>
                                         </button>
                                     </div>
                                 {% endif %}

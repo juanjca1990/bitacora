@@ -33,11 +33,17 @@
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ml-auto">
                     {% if user.is_authenticated %}
-                       <li class="nav-item">
-                            <a class="nav-link" href="{% url 'obtener_fecha' %}">Monitoreo</a>
-                        </li>
+                        {% if user.is_staff %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'obtener_fecha_monitor_admin' %}">Monitoreo</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'obtener_fecha' %}">Monitoreo</a>
+                            </li>
+                        {% endif %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'registros' %}">Registros</a>
+                            <a class="nav-link" href="{% url 'transacciones' %}">Transacciones</a>
                         </li>
                         {% if not user.is_superuser %}
                             <li class="nav-item">
