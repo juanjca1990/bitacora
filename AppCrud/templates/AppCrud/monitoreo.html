@@ -25,6 +25,29 @@
         textarea { width: 100%; height: 100px; padding: 8px; margin-top: 10px; border: 1px solid #ccc;}
         .submit-btn { margin-top: 10px; padding: 8px 16px; background-color: #4CAF50; color: white; border: none; cursor: pointer;}
         .submit-btn:hover { background-color: #45a049; }
+
+        .btn {
+        display: inline-block;
+        padding: 8px 16px;
+        font-size: 15px;
+        font-weight: 500;
+        color: #fff;
+        background-color: #007bff;
+        border: none;
+        border-radius: 4px;
+        text-decoration: none;
+        margin-right: 5px;
+        transition: background 0.2s;
+        }
+        .btn-secondary {
+            background-color: #6c757d;
+        }
+        .btn:hover {
+            background-color: #0056b3;
+        }
+        .btn-secondary:hover {
+            background-color: #565e64;
+        }
     </style>
 </head>
 {% load custom_filters %}
@@ -59,82 +82,84 @@
             <div class="icono-item">
                 <div class="cuadro-azul"></div> Se realizó un comentario
             </div>
-            <div class="nav-meses">
-                <a href="{% url 'imprimirRegistroMes' mes=mes anio=anio empresa_id=empresa.id %}">
-                    Imprimir registro mes
-                </a>
-            </div>
-        </div>
-        <div class="nav-meses">
-            <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}">← Mes Anterior</a>
-            <h3>{{ mes }}/{{ anio }}</h3>
-            <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}">Mes Siguiente →</a>
-        </div>
-        {% for servidor_obj, tabla_datos in registros_por_servidor.items %}
-            <h2>Servidor: {{ servidor_obj.nombre }}</h2>
-            {% if tabla_datos %}
-                <table>
-                    <thead>
-                        <tr>
-                            <th></th>
-                            {% for dia in dias_semana %}
-                                <th>{{ dia }}</th>
-                            {% endfor %}
-                        </tr>
-                        <tr>
-                            <th>Transacciones</th>
-                            {% for dia in dias_mes %}
-                                <th>{{ dia.day }}</th>
-                            {% endfor %}
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for fila in tabla_datos %}
-                        <tr>
-                            <td class="nombre-descripcion"><p>{{ fila.registro.nombre }}</p><p>{{ fila.registro.descripcion }}</p></td>
-                            {% for estado in fila.estados %}
-                            <td>
-                                {% if dias_no_modificables|index:forloop.counter0 %}
-                                    <div class="icon-container dia-no-modificable">
-                                        <i></i>
-                                    </div>
-                                {% else %}
-                                    <div class="icon-container"
-                                         data-servidor-id="{{ servidor_obj.id }}"
-                                         data-empresa-id="{{ empresa.id }}"
-                                         onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_mes|index:forloop.counter0 }}')">
-                                        <i class="fas 
-                                            {% if estado %}
-                                                {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
-                                                {% elif estado.tipo_verificacion == 'no_verificado' %}fa-circle icono-vacio
-                                                {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
-                                                {% elif estado.tipo_verificacion == 'pendiente' %}fa-exclamation-circle icono-amarillo
-                                                {% endif %}
-                                            {% else %}
-                                                fa-circle icono-vacio
-                                            {% endif %}
-                                        "></i>
-                                    </div>
-                                {% endif %}
-                                {% if not dias_no_modificables|index:forloop.counter0 %}
-                                    <div>
-                                        <button class="descripcion-btn {% if estado.descripcion %}descripcion-btn-azul{% endif %}"
-                                            onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', '{{ estado.id }}', '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
-                                            <i class="fas fa-comment"></i>
-                                        </button>
-                                    </div>
-                                {% endif %}
-                            </td>
-                            {% endfor %}
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            {% else %}
-                <p>No hay registros para este servidor.</p>
-            {% endif %}
-        {% endfor %}
     </div>
+    <div class="nav-referencia-estados" style="margin-bottom: 10px;">
+        <a href="{% url 'imprimirRegistroMes' mes=mes anio=anio empresa_id=empresa.id %}" class="btn btn-primary">
+            <i class="fas fa-file-pdf"></i> Imprimir registro mes
+        </a>
+        <a href="{% url 'imprimirRegistroMesCompleto' mes=mes anio=anio empresa_id=empresa.id %}" class="btn btn-primary" style="margin-left: 10px;">
+            <i class="fas fa-file-pdf"></i> Imprimir registro mes (completo)
+        </a>
+    </div>
+    <div class="nav-meses">
+        <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}">← Mes Anterior</a>
+        <h3>{{ mes }}/{{ anio }}</h3>
+        <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}">Mes Siguiente →</a>
+    </div>
+    {% for servidor_obj, tabla_datos in registros_por_servidor.items %}
+        <h2>Servidor: {{ servidor_obj.nombre }}</h2>
+        {% if tabla_datos %}
+            <table>
+                <thead>
+                    <tr>
+                        <th></th>
+                        {% for dia in dias_semana %}
+                            <th>{{ dia }}</th>
+                        {% endfor %}
+                    </tr>
+                    <tr>
+                        <th>Transacciones</th>
+                        {% for dia in dias_mes %}
+                            <th>{{ dia.day }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in tabla_datos %}
+                    <tr>
+                        <td class="nombre-descripcion"><p>{{ fila.registro.nombre }}</p><p>{{ fila.registro.descripcion }}</p></td>
+                        {% for estado in fila.estados %}
+                        <td>
+                            {% if dias_no_modificables|index:forloop.counter0 %}
+                                <div class="icon-container dia-no-modificable">
+                                    <i></i>
+                                </div>
+                            {% else %}
+                                <div class="icon-container"
+                                        data-servidor-id="{{ servidor_obj.id }}"
+                                        data-empresa-id="{{ empresa.id }}"
+                                        onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_mes|index:forloop.counter0 }}')">
+                                    <i class="fas 
+                                        {% if estado %}
+                                            {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
+                                            {% elif estado.tipo_verificacion == 'no_verificado' %}fa-circle icono-vacio
+                                            {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
+                                            {% elif estado.tipo_verificacion == 'pendiente' %}fa-exclamation-circle icono-amarillo
+                                            {% endif %}
+                                        {% else %}
+                                            fa-circle icono-vacio
+                                        {% endif %}
+                                    "></i>
+                                </div>
+                            {% endif %}
+                            {% if not dias_no_modificables|index:forloop.counter0 %}
+                                <div>
+                                    <button class="descripcion-btn {% if estado.descripcion %}descripcion-btn-azul{% endif %}"
+                                        onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', '{{ estado.id }}', '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
+                                        <i class="fas fa-comment"></i>
+                                    </button>
+                                </div>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        {% else %}
+            <p>No hay registros para este servidor.</p>
+        {% endif %}
+    {% endfor %}
 {% else %}
     <p>No hay datos disponibles para mostrar.</p>
 {% endif %}
