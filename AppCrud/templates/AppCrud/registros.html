@@ -1,14 +1,14 @@
 {% extends "AppCrud/padre.html" %}
 
-{% block title %}Lista de Registros{% endblock %}
+{% block title %}Lista de Transacciones{% endblock %}
 
 {% block bloque %}
 <div class="container mt-5">
-    <h1 class="text-center">Lista de Registros</h1>
+    <h1 class="text-center">Lista de Transacciones</h1>
     
     <!-- Botón para dar de alta un registro -->
     <div class="text-end mb-3">
-        <a href="{% url 'RegistroForm' %}" class="btn btn-primary">Dar de Alta Registro</a>
+        <a href="{% url 'RegistroForm' %}" class="btn btn-primary">Dar de Alta Transaccion</a>
     </div>
     
     <table class="table table-bordered table-striped mt-3">
