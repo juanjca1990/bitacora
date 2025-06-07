@@ -66,4 +66,5 @@ urlpatterns = [
     path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
     path('cambiarFechaMonitor/',cambiarFechaMonitor, name='cambiarFechaMonitor'),
     
+    path('imprimirRegistroMesCompleto/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMesCompleto, name="imprimirRegistroMesCompleto"),
 ]
