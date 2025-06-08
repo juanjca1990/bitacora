@@ -40,6 +40,7 @@ def inicio(request):
     if user.is_staff or user.is_superuser:
         admin = 1
         request.session['admin'] = True  # Add 'admin' to session storage
+        request.session["bloquear_edicion"] = True
     else:
         request.session['admin'] = False  # Ensure 'admin' is False for non-staff users
 
@@ -794,6 +795,7 @@ def cambiar_usuario(request):
             nuevo_usuario = User.objects.get(id=user_id)
             login(request, nuevo_usuario)
             request.session['admin'] = True
+            request.session['bloquear_edicion'] = True  # bloquea edición por defecto
         except User.DoesNotExist:
             pass
     # return redirect('inicio') 
@@ -813,7 +815,6 @@ def logout_request(request):
 
 def obtener_fecha(request):
     hoy = now().date()
-    print("voy a monitoreo")
     return redirect('monitoreo', hoy=hoy)
 
 
@@ -842,13 +843,23 @@ def cambiarFechaMonitor(request):
     
 def obtener_fecha_monitor_admin(request):
     hoy = now().date()
-    print("voy a monitoreo admin")
     return redirect('monitoreo_admin', hoy=hoy)
+
+
+def habilitar_deshabilitar_edicion(request):
+    
+    if request.session["bloquear_edicion"] == True:
+        request.session["bloquear_edicion"] = False
+        messages.success(request, "Edición habilitada.")
+    else:
+        request.session["bloquear_edicion"] = True
+        messages.warning(request, "Edición deshabilitada. No se pueden modificar los estados.")
+    return redirect('monitoreo_admin', hoy=date.today())
+
 
 
 @login_required
 def monitoreo_admin(request, hoy):
-    print("estoyt en ADMIIIIIIIIIIIIN")
     empresas = Empresa.objects.all().order_by('nombre')
     empresa_id = request.GET.get('empresa_id')
     if empresa_id:
@@ -902,8 +913,16 @@ def monitoreo_admin(request, hoy):
             }
             registros_por_servidor[servidor].append(fila)
     registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
-
-    dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
+    # Verifica si la edición está bloqueada
+    if request.session["bloquear_edicion"] == True:
+        hoy_real = now().date()
+        dias_no_modificables = [
+            dia.weekday() in [5, 6] or dia <= (hoy_real - timedelta(days=7))
+            for dia in dias_mes
+        ]
+    else:
+        dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
+        
     mes_anterior = (primer_dia - relativedelta(months=1)).month
     anio_anterior = (primer_dia - relativedelta(months=1)).year
     mes_siguiente = (primer_dia + relativedelta(months=1)).month
@@ -984,8 +1003,11 @@ def monitoreo(request, hoy):
 
     registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
 
-    dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
-
+    hoy_real = now().date()
+    dias_no_modificables = [
+        dia.weekday() in [5, 6] or dia <= (hoy_real - timedelta(days=7))
+        for dia in dias_mes
+    ]
     mes_anterior = (primer_dia - relativedelta(months=1)).month
     anio_anterior = (primer_dia - relativedelta(months=1)).year
     mes_siguiente = (primer_dia + relativedelta(months=1)).month
@@ -1015,7 +1037,6 @@ def monitoreo(request, hoy):
 
 @csrf_exempt
 def registrarEstado(request):
-    print("Estoy en registrarEstado")
     if request.method == "POST":
         try:
             print("Estoy en el try de registrarEstado")
@@ -1141,7 +1162,6 @@ def imprimirRegistroMes(request, mes, anio, empresa_id):
     styleTitle = styles["Title"]
 
     # Título con el nombre de la empresa
-    from reportlab.platypus import Spacer
     elements = [Paragraph(str(empresa.nombre), styleTitle), Spacer(1, 12)]
 
     data = [["Servidor", "Registro", "Descripción", "Comentario", "Estado", "Fecha"]]
