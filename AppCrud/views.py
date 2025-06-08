@@ -36,13 +36,14 @@ def inicio(request):
     mensaje = request.GET.get('mensaje', '')
     user = request.user
     admin = 0
-
-    if user.is_staff or user.is_superuser:
+    print("Usuario:", user)
+    if user.is_staff or user.is_superuser or request.session.get('admin', True):
         admin = 1
         request.session['admin'] = True  # Add 'admin' to session storage
         request.session["bloquear_edicion"] = True
     else:
         request.session['admin'] = False  # Ensure 'admin' is False for non-staff users
+        request.session["bloquear_edicion"] = True
 
     return render(request, "AppCrud/inicio.html", {"mensaje": mensaje, "admin": admin})
 
@@ -785,31 +786,53 @@ def editar_servidor(request, servidor_id):
     return render(request, 'AppCrud/editarServidor.html', {'form': form, 'servidor': servidor})
 
 
+# @login_required
+# def cambiar_usuario(request):
+#     User = get_user_model()
+#     if request.method == "POST":
+#         user_id = request.POST.get("user_id")
+#         print("el usuario es : ",user_id)
+#         try:
+#             nuevo_usuario = User.objects.get(id=user_id)
+#             login(request, nuevo_usuario)
+#             request.session['admin'] = True
+#             request.session['bloquear_edicion'] = True  # bloquea edición por defecto
+#         except User.DoesNotExist:
+#             pass
+#     # return redirect('inicio') 
+#     admin = 1
+#     # users = lista_usuarios(request)  # Pass the request argument here
+#     return render(request, "AppCrud/inicio.html", {
+#         "admin": admin, 
+#         'users': User.objects.all() # Pass the dictionary of users
+#     })
+    
 @login_required
 def cambiar_usuario(request):
     User = get_user_model()
     if request.method == "POST":
+        print("Cambiando usuario. es un post..")
         user_id = request.POST.get("user_id")
-        print("el usuario es : ",user_id)
+        print("el usuario es : ", user_id)
         try:
             nuevo_usuario = User.objects.get(id=user_id)
             login(request, nuevo_usuario)
             request.session['admin'] = True
-            request.session['bloquear_edicion'] = True  # bloquea edición por defecto
+            # request.session['bloquear_edicion'] = True
         except User.DoesNotExist:
             pass
-    # return redirect('inicio') 
-    admin = 1
-    # users = lista_usuarios(request)  # Pass the request argument here
-    return render(request, "AppCrud/inicio.html", {
-        "admin": admin, 
-        'users': User.objects.all() # Pass the dictionary of users
-    })
+        # Redirige SIEMPRE después del POST
+        return redirect('inicio')
+    # Si GET, muestra la página normalmente
+    print("fue un GET")
+    request.session['admin'] = True
+    return redirect('inicio')
     
 
 @login_required
 def logout_request(request):
     logout(request)
+    request.session["admin"] = False
     return redirect('Login')
 
 

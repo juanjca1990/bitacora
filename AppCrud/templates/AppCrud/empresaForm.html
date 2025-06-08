@@ -2,5 +2,10 @@
 {% block titulo %} <h1 class="text-center">Crear Empresa</h1> {% endblock %}
 {% block formulario %} 
     {% csrf_token %}
-    {{ empresa_form.as_p }}
+    {{ empresa_form.nombre.label_tag }} {{ empresa_form.nombre }}
+    {{ empresa_form.logo.label_tag }} {{ empresa_form.logo }}
+    {% if not hide_colors %}
+        {{ empresa_form.colorPrimario.label_tag }} {{ empresa_form.colorPrimario }}
+        {{ empresa_form.colorSecundario.label_tag }} {{ empresa_form.colorSecundario }}
+    {% endif %}
 {% endblock %}
