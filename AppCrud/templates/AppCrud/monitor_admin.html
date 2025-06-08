@@ -94,6 +94,9 @@
         <a href="{% url 'imprimirRegistroMesCompleto' mes=mes anio=anio empresa_id=empresa.id %}" class="btn btn-primary" style="margin-left: 10px;">
             <i class="fas fa-file-pdf"></i> Imprimir registro mes (completo)
         </a>
+        <a href="{% url 'habilitar_deshabilitar_edicion' %}" class="btn btn-primary" style="margin-left: 10px;">
+            <i class="fas fa-file-pdf"></i> deshabilitar/habilitar
+        </a>
     </div>
     <div class="nav-meses">
         <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">← Mes Anterior</a>
@@ -126,35 +129,56 @@
                                 <td class="nombre-descripcion"><p>{{ fila.registro.nombre }}</p><p>{{ fila.registro.descripcion }}</p></td>
                                 {% for estado in fila.estados %}
                                 <td>
-                                    {% if dias_no_modificables|index:forloop.counter0 %}
-                                        <div class="icon-container dia-no-modificable">
-                                            <i></i>
-                                        </div>
-                                    {% else %}
-                                        <div class="icon-container"
-                                             data-servidor-id="{{ servidor_obj.id }}"
-                                             data-empresa-id="{{ empresa.id }}"
-                                             onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_mes|index:forloop.counter0 }}')">
-                                            <i class="fas 
-                                                {% if estado %}
-                                                    {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
-                                                    {% elif estado.tipo_verificacion == 'no_verificado' %}fa-circle icono-vacio
-                                                    {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
-                                                    {% elif estado.tipo_verificacion == 'pendiente' %}fa-exclamation-circle icono-amarillo
-                                                    {% else %}fa-circle icono-vacio
+                                    {% with dia_actual=dias_mes|index:forloop.counter0 %}
+                                        {% if dia_actual.weekday == 5 or dia_actual.weekday == 6 %}
+                                            <!-- Sábado o domingo: celda vacía -->
+                                        {% elif dias_no_modificables|index:forloop.counter0 %}
+                                            <div class="icon-container dia-no-modificable" style="font-weight:bold; font-size:16px; cursor:not-allowed;">
+                                                <i class="fas
+                                                    {% if estado %}
+                                                        {% if estado.tipo_verificacion == 'bien' %}fa-check-circle
+                                                        {% elif estado.tipo_verificacion == 'no_verificado' %}fa-circle
+                                                        {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle
+                                                        {% elif estado.tipo_verificacion == 'pendiente' %}fa-exclamation-circle
+                                                        {% else %}fa-circle icono-vacio
+                                                        {% endif %}
+                                                    {% else %}
+                                                        fa-circle icono-vacio
                                                     {% endif %}
-                                                {% else %}
-                                                    fa-circle icono-vacio
-                                                {% endif %}
-                                            "></i>
-                                        </div>
-                                        <div>
-                                            <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %}"
-                                                onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', {% if estado %}'{{ estado.id }}'{% else %}''{% endif %}, '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
-                                                <i class="fas fa-comment"></i>
-                                            </button>
-                                        </div>
-                                    {% endif %}
+                                                "></i>
+                                            </div>
+                                            <div>
+                                                <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %}"
+                                                    {{ dias_mes|index:forloop.counter0 }}', {% if estado %}'{{ estado.id }}'{% else %}''{% endif %}, '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
+                                                    <i class="fas fa-comment"></i>
+                                                </button>
+                                            </div>
+                                        {% else %}
+                                            <div class="icon-container"
+                                                 data-servidor-id="{{ servidor_obj.id }}"
+                                                 data-empresa-id="{{ empresa.id }}"
+                                                 onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_mes|index:forloop.counter0 }}')">
+                                                <i class="fas 
+                                                    {% if estado %}
+                                                        {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
+                                                        {% elif estado.tipo_verificacion == 'no_verificado' %}fa-circle icono-vacio
+                                                        {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
+                                                        {% elif estado.tipo_verificacion == 'pendiente' %}fa-exclamation-circle icono-amarillo
+                                                        {% else %}fa-circle icono-vacio
+                                                        {% endif %}
+                                                    {% else %}
+                                                        fa-circle icono-vacio
+                                                    {% endif %}
+                                                "></i>
+                                            </div>
+                                            <div>
+                                                <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %}"
+                                                    onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', {% if estado %}'{{ estado.id }}'{% else %}''{% endif %}, '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
+                                                    <i class="fas fa-comment"></i>
+                                                </button>
+                                            </div>
+                                        {% endif %}
+                                    {% endwith %}
                                 </td>
                                 {% endfor %}
                             </tr>
