@@ -25,8 +25,14 @@ class EmpresaVisualForm(forms.ModelForm):
         model = Empresa
         fields = ['nombre']
 
-    colorPrimario = forms.CharField(widget=forms.TextInput(attrs={'type': 'color'}))
-    colorSecundario = forms.CharField(widget=forms.TextInput(attrs={'type': 'color'}))
+    colorPrimario = forms.CharField(
+        widget=forms.TextInput(attrs={'type': 'color'}),
+        required=False
+    )
+    colorSecundario = forms.CharField(
+        widget=forms.TextInput(attrs={'type': 'color'}),
+        required=False
+    )
     logo = forms.ImageField(required=True)  # Cambiado a obligatorio
 
 
