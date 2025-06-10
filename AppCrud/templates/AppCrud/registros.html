@@ -6,7 +6,12 @@
 <div class="container mt-5">
     <h1 class="text-center">Lista de Transacciones</h1>
     
-    <!-- Botón para dar de alta un registro -->
+    <!-- Buscador -->
+    <form method="get" class="mb-3 d-flex">
+        <input type="text" name="q" class="form-control me-2" placeholder="Buscar por nombre o descripción" value="{{ query|default:'' }}">
+        <button type="submit" class="btn btn-primary">Buscar</button>
+    </form>
+    
     <div class="text-end mb-3">
         <a href="{% url 'RegistroForm' %}" class="btn btn-primary">Dar de Alta Transaccion</a>
     </div>
@@ -34,5 +39,34 @@
             {% endfor %}
         </tbody>
     </table>
+
+    <!-- Paginación -->
+    <nav>
+        <ul class="pagination justify-content-center">
+            {% if registros.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&page=1">&laquo;</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&page={{ registros.previous_page_number }}">&lsaquo;</a>
+                </li>
+            {% endif %}
+            {% for num in registros.paginator.page_range %}
+                {% if registros.number == num %}
+                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
+                {% elif num > registros.number|add:'-3' and num < registros.number|add:'3' %}
+                    <li class="page-item"><a class="page-link" href="?q={{ query }}&page={{ num }}">{{ num }}</a></li>
+                {% endif %}
+            {% endfor %}
+            {% if registros.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&page={{ registros.next_page_number }}">&rsaquo;</a>
+                </li>
+                <li class="page-item">
+                    <a class="page-link" href="?q={{ query }}&page={{ registros.paginator.num_pages }}">&raquo;</a>
+                </li>
+            {% endif %}
+        </ul>
+    </nav>
 </div>
 {% endblock %}
