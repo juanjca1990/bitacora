@@ -9,6 +9,15 @@
                 {{ mensaje }}
                 {% if user.is_authenticated %}
                     <div class="list-group">
+                        {% if user.is_staff %}
+                            <a class="list-group-item list-group-item-action list-group-item-dark mb-2" href="{% url 'obtener_fecha_monitor_admin' %}" type="button">
+                                <i class="fas fa-calendar-check fa-fw me-2"></i> Monitoreo
+                            </a>
+                        {% else %}
+                            <a class="list-group-item list-group-item-action list-group-item-dark mb-2" href="{% url 'obtener_fecha' %}" type="button"> 
+                                <i class="fas fa-calendar-check fa-fw me-2"></i> Monitoreo 
+                            </a>
+                        {% endif %}
                         <a class="list-group-item list-group-item-action list-group-item-primary mb-2" href="{% url 'bitacora'  %}" type="button">
                             <i class="fas fa-calendar-check fa-fw me-2"></i> Bitacoras
                         </a>
