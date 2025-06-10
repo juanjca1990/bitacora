@@ -24,17 +24,18 @@
         
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg ">
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
             {% if user.is_authenticated %}
-            <img src="{{  user.empresa.visual_empresa.logo.url }}"  alt="Logo">
+                <img src="{{ user.empresa.visual_empresa.logo.url }}" alt="Logo">
             {% endif %}
-                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+            <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ml-auto">
                     {% if user.is_authenticated %}
+                        <!-- Gestión Dropdown -->
                         {% if user.is_staff %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'obtener_fecha_monitor_admin' %}">Monitoreo</a>
@@ -44,58 +45,66 @@
                                     <a class="nav-link" href="{% url 'obtener_fecha' %}">Monitoreo</a>
                             </li>
                         {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'transacciones' %}">Transacciones</a>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="gestionDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Gestión
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="gestionDropdown">
+                                <a class="dropdown-item" href="{% url 'bitacora' %}">Bitácoras</a>
+                                <a class="dropdown-item" href="{% url 'job' %}">Jobs</a>
+                                <a class="dropdown-item" href="{% url 'transacciones' %}">Transacciones</a>
+                                {% if not user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'servidores' %}">Servidores</a>
+                                {% endif %}
+                                {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'empresa' %}">Empresas</a>
+                                {% endif %}
+                            </div>
                         </li>
-                        {% if not user.is_superuser %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'servidores' %}">Servidores</a>
-                            </li>
+                        <!-- Avisos y Contactos Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="avisosDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Avisos y Contactos
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="avisosDropdown">
+                                <a class="dropdown-item" href="{% url 'aviso' %}">Avisos</a>
+                                <a class="dropdown-item" href="{% url 'contacto' %}">Contactos</a>
+                            </div>
+                        </li>
+                        <!-- Usuarios Dropdown -->
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="usuariosDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                                Usuarios
+                            </a>
+                            <div class="dropdown-menu" aria-labelledby="usuariosDropdown">
+                                {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'RegisterOption' %}">Registrar Usuario</a>
+                                {% endif %}
+                                <a class="dropdown-item" href="{% url 'EditarPerfil' %}">Editar Perfil ({{ user.username }})</a>
+                                <a class="dropdown-item" href="{% url 'usuarios' %}">Lista Usuarios</a>
+                                <a class="dropdown-item" href="{% url 'administradores' %}">Lista Administradores</a>
+                            </div>
+                        </li>
+                        {% if request.session.admin %}
+                        <li class="nav-item d-flex align-items-center">
+                            <form method="POST" action="{% url 'cambiar_usuario' %}" class="form-inline my-0 d-flex align-items-center">
+                                {% csrf_token %}
+                                <select name="user_id" class="form-control mr-2" style="max-width: 150px;">
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary ml-2">Cambiar</button>
+                            </form>
+                        </li>
                         {% endif %}
+                        <!-- Sesión -->
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'bitacora' %}">Bitacoras</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link nav-link-light" href="{% url 'job' %}">Jobs</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'aviso' %}">Avisos</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'contacto' %}">Contactos</a>
-                        </li>
-                        {% if user.is_superuser %}
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'RegisterOption' %}">Registrar Usuario</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{% url 'empresa' %}">Empresas</a>
-                            </li>
-                        {% endif %}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'EditarPerfil' %}">Usuario: {{ user.username }}</a>
-                        </li>
-                        <li class="nav-item">
-                            {% if request.session.admin %}
-                            <li class="nav-item">
-                                <form method="POST" action="{% url 'cambiar_usuario' %}" class="form-inline">
-                                    {% csrf_token %}
-                                    <select name="user_id" class="form-control mr-2" style="width: auto;">
-                                        {% for user in users %}
-                                            <option value="{{ user.id }}">{{ user.username }}</option>
-                                        {% endfor %}
-                                    </select>
-                                    <button type="submit" class="btn btn-sm btn-outline-light">Cambiar usuario</button>
-                                </form>
-                            </li>
-                            {% endif %}
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{% url 'Logout' %}">CERRAR SESION</a>
+                            <a class="nav-link" href="{% url 'Logout' %}">Cerrar Sesión</a>
                         </li>
                     {% else %}
                         <li class="nav-item">
-                            <a class="nav-link" href="{% url 'Login' %}">INGRESAR</a>
+                            <a class="nav-link" href="{% url 'Login' %}">Ingresar</a>
                         </li>
                     {% endif %}
                 </ul>

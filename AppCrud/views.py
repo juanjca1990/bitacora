@@ -1155,7 +1155,7 @@ def imprimirRegistroMes(request, mes, anio, empresa_id):
     servidores = Servidor.objects.filter(empresa=empresa)
     registros = Registro.objects.filter(servidor__in=servidores)
 
-    # Filtrar estados con "fallo" o que tengan algún comentario (descripcion no vacía)
+    # Filtrar estados with "fallo" o que tengan algún comentario (descripcion no vacía)
     estados = Estado.objects.filter(
         registro_verificado__in=registros,
         fecha__year=anio,
@@ -1264,3 +1264,34 @@ def imprimirRegistroMesCompleto(request, mes, anio, empresa_id):
 
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"RegistroCompleto_{mes}_{anio}.pdf")
+@login_required
+def lista_usuarios(request):
+    User = get_user_model()
+    q_usuarios = request.GET.get('q_usuarios', '')
+    usuarios = User.objects.filter(is_superuser=False).exclude(groups__name__endswith='_admin')
+    if q_usuarios:
+        usuarios = usuarios.filter(
+            Q(username__icontains=q_usuarios) | Q(email__icontains=q_usuarios)
+        )
+    usuarios_paginator = Paginator(usuarios.distinct(), 10)
+    usuarios_page = request.GET.get('usuarios_page', 1)
+    usuarios_obj = usuarios_paginator.get_page(usuarios_page)
+    return render(request, "AppCrud/lista_usuarios.html", {
+        "usuarios": usuarios_obj,
+    })
+
+@login_required
+def lista_administradores(request):
+    User = get_user_model()
+    q_admins = request.GET.get('q_admins', '')
+    administradores = User.objects.filter(is_superuser=True) | User.objects.filter(groups__name__endswith='_admin')
+    if q_admins:
+        administradores = administradores.filter(
+            Q(username__icontains=q_admins) | Q(email__icontains=q_admins)
+        )
+    admin_paginator = Paginator(administradores.distinct(), 10)
+    admin_page = request.GET.get('admin_page', 1)
+    admin_obj = admin_paginator.get_page(admin_page)
+    return render(request, "AppCrud/lista_administradores.html", {
+        "administradores": admin_obj,
+    })
