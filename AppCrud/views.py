@@ -644,7 +644,7 @@ def avisar(request, id):
         
 
             send_mail(subject, message, 'avisos@exerom.com', emails)
-        # Redireccionar a la página de inicio con un mensaje de éxito
+        # Redirige a la página de inicio con un mensaje de éxito
             messages.success(request, 'Los correos electrónicos han sido enviados.')
             
             return redirect('bitacora')
@@ -706,10 +706,21 @@ def obtener_mails_y_nombres(job):
     return(emails, nombres)
 
 
+@login_required
 def transacciones(request):
     registros = Registro.objects.all()
-    return render(request, "AppCrud/registros.html", {"registros": registros})
-
+    # Buscador
+    query = request.GET.get('q', '')
+    if query:
+        registros = registros.filter(nombre__icontains=query) | registros.filter(descripcion__icontains=query)
+    # Paginación
+    paginator = Paginator(registros, 10)  # 10 por página
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    return render(request, "AppCrud/registros.html", {
+        "registros": page_obj,
+        "query": query,
+    })
 
 def registroForm(request):
     if request.method == 'POST':
@@ -785,27 +796,6 @@ def editar_servidor(request, servidor_id):
         form = ServidorForm(instance=servidor)
     return render(request, 'AppCrud/editarServidor.html', {'form': form, 'servidor': servidor})
 
-
-# @login_required
-# def cambiar_usuario(request):
-#     User = get_user_model()
-#     if request.method == "POST":
-#         user_id = request.POST.get("user_id")
-#         print("el usuario es : ",user_id)
-#         try:
-#             nuevo_usuario = User.objects.get(id=user_id)
-#             login(request, nuevo_usuario)
-#             request.session['admin'] = True
-#             request.session['bloquear_edicion'] = True  # bloquea edición por defecto
-#         except User.DoesNotExist:
-#             pass
-#     # return redirect('inicio') 
-#     admin = 1
-#     # users = lista_usuarios(request)  # Pass the request argument here
-#     return render(request, "AppCrud/inicio.html", {
-#         "admin": admin, 
-#         'users': User.objects.all() # Pass the dictionary of users
-#     })
     
 @login_required
 def cambiar_usuario(request):
