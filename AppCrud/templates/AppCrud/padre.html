@@ -160,14 +160,16 @@
 
         /* Estilo para los botones */
         .btn-primary {
-        background-color: {{ user.empresa.visual_empresa.colorPrimario }};
-        border-color: {{ user.empresa.visual_empresa.colorPrimario }};
+            background-color: {{ user.empresa.visual_empresa.colorSecundario }};
+            color: {{ user.empresa.visual_empresa.colorPrimario }};
+            border-color: {{ user.empresa.visual_empresa.colorPrimario }};
         }
 
         /* Estilo para los botones al pasar el mouse */
         .btn-primary:hover {
-        background-color: #3b3b3b;
-        border-color: #3b3b3b;
+            background-color: #3b3b3b;
+            color: white;
+            border-color: #3b3b3b;
         }
 
         /* Estilo para los botones activos */
