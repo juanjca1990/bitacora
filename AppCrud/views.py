@@ -386,9 +386,12 @@ def empresaForm(request):
         print(request.FILES)
         if empresa_form.is_valid():
             empresa = empresa_form.save(commit=False)
-            visual_empresa = VisualEmpresa(colorPrimario=request.POST['colorPrimario'],
-                                           colorSecundario=request.POST['colorSecundario'],
-                                           logo=request.FILES['logo'])
+            # Colores por defecto: primario azul, secundario blanco
+            visual_empresa = VisualEmpresa(
+                colorPrimario="#007bff",  # Azul
+                colorSecundario="#ffffff",  # Blanco
+                logo=request.FILES['logo']
+            )
             visual_empresa.save()
             empresa.visual_empresa = visual_empresa
             empresa.save()
@@ -429,7 +432,8 @@ def empresaForm(request):
             return redirect('./empresa/', {"empresas": empresas, "empresa_admin": usuario.has_perm('AppCrud.empresa_admin')})
 
     empresa_form = EmpresaVisualForm()
-    return render(request, "AppCrud/empresaForm.html", {"empresa_form": empresa_form})
+    # Oculta los campos de color en el formulario
+    return render(request, "AppCrud/empresaForm.html", {"empresa_form": empresa_form, "hide_colors": True})
 
 
 @login_required
