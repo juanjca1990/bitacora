@@ -15,6 +15,7 @@
             <tr>
                 <th>Usuario</th>
                 <th>Email</th>
+                <th>Empresa</th>
             </tr>
         </thead>
         <tbody>
@@ -22,6 +23,13 @@
             <tr>
                 <td>{{ user.username }}</td>
                 <td>{{ user.email }}</td>
+                <td>
+                    {% if user.empresa %}
+                        {{ user.empresa.nombre }}
+                    {% else %}
+                        Sin empresa
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
