@@ -206,4 +206,16 @@ class ServidorForm(forms.ModelForm):
             'registos': forms.CheckboxSelectMultiple(),
         }
 
+class AsignarAdminForm(forms.Form):
+    usuario = forms.ModelChoiceField(
+        queryset=User.objects.all(),
+        label="Usuario",
+        widget=forms.Select(attrs={'class': 'form-control select2'})  # Puedes usar select2 para mejor búsqueda
+    )
+    empresa = forms.ModelChoiceField(
+        queryset=Empresa.objects.all(),
+        label="Empresa",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
 

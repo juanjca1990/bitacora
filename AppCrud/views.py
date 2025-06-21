@@ -5,7 +5,7 @@ from django.http import JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from AppCrud.models import Estado, Job, Contacto, Aviso, Bitacora, Empresa, Registro,Servidor, User, VisualEmpresa
-from AppCrud.forms import JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, RegistroForm,RegistroUsuarioForm, ServidorForm, UserEditForm, EmpresaVisualForm
+from AppCrud.forms import JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, RegistroForm,RegistroUsuarioForm, ServidorForm, UserEditForm, EmpresaVisualForm, AsignarAdminForm
 
 from django.core.paginator import Paginator
 
@@ -531,23 +531,27 @@ def registerOption(request):
 @login_required
 @permission_required('AppCrud.add_user', raise_exception=True)
 def registerAdmin(request):
-    if request.method=="POST":
-        form= RegistroUsuarioForm(request.POST)
+    if request.method == "POST":
+        form = AsignarAdminForm(request.POST)
         if form.is_valid():
-            usernm= form.cleaned_data.get("username")
-            empresa= form.cleaned_data.get("empresa")
+            usuario = form.cleaned_data["usuario"]
+            empresa = form.cleaned_data["empresa"]
 
-            form.save()
+            # Asigna la nueva empresa al usuario
+            usuario.empresa = empresa
+            usuario.save()
 
-            user = User.objects.get(username=usernm)
-            group = Group.objects.get(name=f"{empresa}_admin")
-            user.groups.add(group)
-            return redirect('./inicio/', {"mensaje":f"Usuario {usernm} creado correctamente"})
+            # Asigna el grupo de admin de la empresa
+            group = Group.objects.get(name=f"{empresa.nombre}_admin")
+            usuario.groups.clear()
+            usuario.groups.add(group)
+
+            return redirect('./inicio/', {"mensaje": f"Usuario {usuario.username} ahora es administrador de {empresa.nombre}"})
         else:
-            return render(request, "AppCrud/registrarUsuario.html", {"form": form, "mensaje":"Error al crear el usuario","tipo":"Administrador"})
+            return render(request, "AppCrud/registrarUsuario.html", {"form": form, "mensaje": "Error al asignar administrador", "tipo": "Administrador"})
     else:
-        form= RegistroUsuarioForm()
-        return render(request, "AppCrud/registrarUsuario.html", {"form": form,"tipo":"Administrador"})
+        form = AsignarAdminForm()
+        return render(request, "AppCrud/registrarUsuario.html", {"form": form, "tipo": "Administrador"})
     
 @login_required
 def editarPerfil(request):
