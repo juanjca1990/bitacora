@@ -539,6 +539,7 @@ def registerAdmin(request):
 
             # Asigna la nueva empresa al usuario
             usuario.empresa = empresa
+            usuario.is_staff = True  # Asegúrate de que el usuario sea staff
             usuario.save()
 
             # Asigna el grupo de admin de la empresa

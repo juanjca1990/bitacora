@@ -15,6 +15,7 @@
             <tr>
                 <th>Usuario</th>
                 <th>Email</th>
+                <th>Empresa</th> <!-- Nueva columna -->
             </tr>
         </thead>
         <tbody>
@@ -22,6 +23,13 @@
             <tr>
                 <td>{{ admin.username }}</td>
                 <td>{{ admin.email }}</td>
+                <td>
+                    {% if admin.empresa %}
+                        {{ admin.empresa.nombre }}
+                    {% else %}
+                        Sin empresa
+                    {% endif %}
+                </td>
             </tr>
             {% endfor %}
         </tbody>
