@@ -27,7 +27,73 @@
     <nav class="navbar navbar-expand-lg">
         <div class="container">
             {% if user.is_authenticated %}
-                <img src="{{ user.empresa.visual_empresa.logo.url }}" alt="Logo">
+                <!-- Botón menú hamburguesa solo visible en <=990px -->
+                <button class="btn btn-primary d-lg-none" id="menuDropdownBtn" type="button" aria-label="Abrir menú">
+                    <span class="navbar-toggler-icon">Menu</span>
+                </button>
+                <!-- Menú hamburguesa mejorado -->
+                <div class="dropdown-menu-custom" id="dropdownMenuCustom">
+                    <ul class="mobile-menu-list">
+                        <li class="has-submenu">
+                            {% if user.is_staff %}
+                                <a href="{% url 'obtener_fecha_monitor_admin' %}">Monitoreo</a>
+                            {% else %}
+                                <a href="{% url 'obtener_fecha' %}">Monitoreo</a>
+                            {% endif %}
+                        </li>
+                        <li class="has-submenu">
+                            <a href="#">Gestión <span class="submenu-arrow">&#9656;</span></a>
+                            <ul class="submenu">
+                                <li><a href="{% url 'bitacora' %}">Bitácoras</a></li>
+                                <li><a href="{% url 'job' %}">Jobs</a></li>
+                                <li><a href="{% url 'transacciones' %}">Transacciones</a></li>
+                                {% if not user.is_superuser %}
+                                    <li><a href="{% url 'servidores' %}">Servidores</a></li>
+                                {% endif %}
+                                {% if user.is_superuser %}
+                                    <li><a href="{% url 'empresa' %}">Empresas</a></li>
+                                {% endif %}
+                            </ul>
+                        </li>
+                        <li class="has-submenu">
+                            <a href="#">Avisos y Contactos <span class="submenu-arrow">&#9656;</span></a>
+                            <ul class="submenu">
+                                <li><a href="{% url 'aviso' %}">Avisos</a></li>
+                                <li><a href="{% url 'contacto' %}">Contactos</a></li>
+                            </ul>
+                        </li>
+                        <li class="has-submenu">
+                            <a href="#">Usuarios <span class="submenu-arrow">&#9656;</span></a>
+                            <ul class="submenu">
+                                {% if user.is_superuser %}
+                                    <li><a href="{% url 'RegisterOption' %}">Registrar Usuario</a></li>
+                                {% endif %}
+                                <li><a href="{% url 'EditarPerfil' %}">Editar Perfil ({{ user.username }})</a></li>
+                                <li><a href="{% url 'usuarios' %}">Lista Usuarios</a></li>
+                                <li><a href="{% url 'administradores' %}">Lista Administradores</a></li>
+                            </ul>
+                        </li>
+                        {% if request.session.admin %}
+                        <li>
+                            <form method="POST" action="{% url 'cambiar_usuario' %}" class="form-inline my-0 d-flex align-items-center">
+                                {% csrf_token %}
+                                <select name="user_id" class="form-control mr-2" style="max-width: 100%; min-width: 220px; font-size: 1.1em; height: 60px;">
+                                    {% for user in users %}
+                                        <option value="{{ user.id }}">{{ user.username }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button type="submit" class="btn btn-sm btn-primary ml-2">Cambiar</button>
+                            </form>
+                        </li>
+                        {% endif %}
+                        <a class="nav-link has-submenu" href="{% url 'Logout' %}">Cerrar Sesión</a>
+                    </ul>
+                </div>
+            {% endif %}
+            {% if user.is_authenticated %}
+                {% if user.empresa.visual_empresa.logo %}
+                    <img src="{{ user.empresa.visual_empresa.logo.url }}" alt="Logo">
+                {% endif %}
             {% endif %}
             <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -203,3 +269,47 @@
   });
 </script>
 {% endif %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('menuDropdownBtn');
+    var menu = document.getElementById('dropdownMenuCustom');
+    if (btn && menu) {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            menu.style.display = (menu.style.display === 'block') ? 'none' : 'block';
+        });
+        // Cierra el menú al hacer click fuera
+        document.addEventListener('click', function(e) {
+            if (!btn.contains(e.target) && !menu.contains(e.target)) {
+                menu.style.display = 'none';
+                // Cierra todos los submenús
+                document.querySelectorAll('.has-submenu').forEach(function(item){
+                    item.classList.remove('open');
+                });
+            }
+        });
+        // Submenús
+        menu.querySelectorAll('.has-submenu > a').forEach(function(link){
+            link.addEventListener('click', function(e){
+                e.preventDefault();
+                var parent = this.parentElement;
+                parent.classList.toggle('open');
+                // Cierra otros submenús
+                menu.querySelectorAll('.has-submenu').forEach(function(item){
+                    if(item !== parent) item.classList.remove('open');
+                });
+            });
+        });
+        // Cierra el menú al seleccionar una opción
+        menu.querySelectorAll('.dropdown-item, .mobile-menu-list > li > a:not(.has-submenu > a)').forEach(function(item) {
+            item.addEventListener('click', function() {
+                menu.style.display = 'none';
+                document.querySelectorAll('.has-submenu').forEach(function(item){
+                    item.classList.remove('open');
+                });
+            });
+        });
+    }
+});
+</script>

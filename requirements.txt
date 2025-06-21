@@ -1,7 +1,12 @@
 asgiref==3.7.2
+chardet==5.2.0
 Django==4.2.1
 django-colorfield==0.8.0
+networkx==3.4.2
 Pillow==9.5.0
+python-dateutil==2.9.0.post0
+reportlab==4.4.1
+six==1.17.0
 sqlparse==0.4.4
 typing_extensions==4.6.2
 tzdata==2023.3
