@@ -67,7 +67,8 @@ urlpatterns = [
     path('cambiarFechaMonitor/',cambiarFechaMonitor, name='cambiarFechaMonitor'),
     
     path('imprimirRegistroMesCompleto/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMesCompleto, name="imprimirRegistroMesCompleto"),
-    path('habilitar_deshabilitar_edicion/', habilitar_deshabilitar_edicion, name='habilitar_deshabilitar_edicion'),
+    path('habilitar_deshabilitar_edicion_admin/', habilitar_deshabilitar_edicion_admin, name='habilitar_deshabilitar_edicion_admin'),
+        path('habilitar_deshabilitar_edicion_otros/', habilitar_deshabilitar_edicion_otros, name='habilitar_deshabilitar_edicion_otros'),
     
     path('usuarios/', lista_usuarios, name='usuarios'),
     path('administradores/', lista_administradores, name='administradores'),
