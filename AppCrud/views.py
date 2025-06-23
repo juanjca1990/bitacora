@@ -37,7 +37,7 @@ def inicio(request):
     user = request.user
     admin = 0
     print("Usuario:", user)
-    if user.is_staff or user.is_superuser or request.session.get('admin', True):
+    if user.is_superuser or request.session.get('admin', True):
         admin = 1
         request.session['admin'] = True  # Add 'admin' to session storage
         request.session["bloquear_edicion"] = True
@@ -868,15 +868,30 @@ def obtener_fecha_monitor_admin(request):
     return redirect('monitoreo_admin', hoy=hoy)
 
 
-def habilitar_deshabilitar_edicion(request):
+def habilitar_deshabilitar_edicion_admin(request):
     
     if request.session["bloquear_edicion"] == True:
+        print("Edición habilitada")
         request.session["bloquear_edicion"] = False
         messages.success(request, "Edición habilitada.")
     else:
         request.session["bloquear_edicion"] = True
+        print("Edición deshabilitada")
         messages.warning(request, "Edición deshabilitada. No se pueden modificar los estados.")
-    return redirect('monitoreo_admin', hoy=date.today())
+    return redirect('monitoreo_admin',hoy=date.today())
+    
+def habilitar_deshabilitar_edicion_otros(request):
+    
+    if request.session["bloquear_edicion"] == True:
+        print("Edición habilitada")
+        request.session["bloquear_edicion"] = False
+        messages.success(request, "Edición habilitada.")
+    else:
+        request.session["bloquear_edicion"] = True
+        print("Edición deshabilitada")
+        messages.warning(request, "Edición deshabilitada. No se pueden modificar los estados.")
+
+    return redirect('monitoreo', hoy=date.today())
 
 
 
@@ -888,20 +903,29 @@ def monitoreo_admin(request, hoy):
         empresa = Empresa.objects.get(id=empresa_id)
     else:
         empresa = empresas.first()
-        empresa_id = empresa.id if empresa else None
-
-    # Obtén todos los servidores de la empresa seleccionada
+        empresa_id = empresa.id if empresa else None    # Obtén todos los servidores de la empresa seleccionada
     todos_los_servidores = Servidor.objects.filter(empresa=empresa)
     servidor_id = request.GET.get('servidor_id')
 
-    # Si no hay servidor_id, selecciona el primero y filtra solo ese
-    if not servidor_id and todos_los_servidores.exists():
-        servidor_id = todos_los_servidores.first().id
-        servidores = todos_los_servidores.filter(id=servidor_id)
-    elif servidor_id:
-        servidores = todos_los_servidores.filter(id=servidor_id)
+    # Si no hay servidor_id o no existe en la empresa actual, selecciona el primero
+    if not servidor_id:
+        if todos_los_servidores.exists():
+            servidor_id = todos_los_servidores.first().id
+            servidores = todos_los_servidores.filter(id=servidor_id)
+        else:
+            servidores = todos_los_servidores.none()
+            servidor_id = None
+    elif not todos_los_servidores.filter(id=servidor_id).exists():
+        # Si el servidor_id no pertenece a la empresa actual, selecciona el primero
+        if todos_los_servidores.exists():
+            servidor_id = todos_los_servidores.first().id
+            servidores = todos_los_servidores.filter(id=servidor_id)
+        else:
+            servidores = todos_los_servidores.none()
+            servidor_id = None
     else:
-        servidores = todos_los_servidores.none()
+        servidores = todos_los_servidores.filter(id=servidor_id)
+        servidor_id = int(servidor_id)
 
     hoy = datetime.strptime(hoy, "%Y-%m-%d").date()
     primer_dia = hoy.replace(day=1)
@@ -957,7 +981,7 @@ def monitoreo_admin(request, hoy):
         "empresas": empresas,
         "empresa": empresa,
         "servidores": todos_los_servidores,  # Para el select, muestra todos los servidores de la empresa
-        "servidor_id": int(servidor_id) if servidor_id else None,
+        "servidor_id": servidor_id,
         "registros_por_servidor": registros_por_servidor,
         "dias_mes": dias_mes,
         "dias": dias,
@@ -1025,11 +1049,15 @@ def monitoreo(request, hoy):
 
     registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
 
-    hoy_real = now().date()
-    dias_no_modificables = [
-        dia.weekday() in [5, 6] or dia <= (hoy_real - timedelta(days=7))
-        for dia in dias_mes
-    ]
+    # Verifica si la edición está bloqueada
+    if request.session["bloquear_edicion"] == True:
+        hoy_real = now().date()
+        dias_no_modificables = [
+            dia.weekday() in [5, 6] or dia <= (hoy_real - timedelta(days=7))
+            for dia in dias_mes
+        ]
+    else:
+        dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_mes]
     mes_anterior = (primer_dia - relativedelta(months=1)).month
     anio_anterior = (primer_dia - relativedelta(months=1)).year
     mes_siguiente = (primer_dia + relativedelta(months=1)).month

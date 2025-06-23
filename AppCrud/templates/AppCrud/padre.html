@@ -32,13 +32,16 @@
                     <span class="navbar-toggler-icon">Menu</span>
                 </button>
                 <!-- Menú hamburguesa mejorado -->
-                <div class="dropdown-menu-custom" id="dropdownMenuCustom">
-                    <ul class="mobile-menu-list">
-                        <li class="has-submenu">
-                            {% if user.is_staff %}
-                                <a href="{% url 'obtener_fecha_monitor_admin' %}">Monitoreo</a>
+                <div class="dropdown-menu-custom" id="dropdownMenuCustom"><ul class="mobile-menu-list">
+                        <li>
+                        {% if user.is_superuser %}
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'obtener_fecha_monitor_admin' %}">Monitoreo</a>
+                                </li>
                             {% else %}
-                                <a href="{% url 'obtener_fecha' %}">Monitoreo</a>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{% url 'obtener_fecha' %}">Monitoreo</a>
+                                </li>
                             {% endif %}
                         </li>
                         <li class="has-submenu">
@@ -102,7 +105,7 @@
                 <ul class="navbar-nav ml-auto">
                     {% if user.is_authenticated %}
                         <!-- Gestión Dropdown -->
-                        {% if user.is_staff %}
+                        {% if user.is_superuser %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{% url 'obtener_fecha_monitor_admin' %}">Monitoreo</a>
                             </li>

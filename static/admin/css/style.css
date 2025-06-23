@@ -140,3 +140,34 @@ a:hover {
     .dropdown-menu-custom { display: none; }
     .navbar-collapse, .navbar-nav { display: none !important; }
 }
+
+.table-responsive {
+    width: 100%;
+    overflow-x: auto;
+    position: relative;
+}
+.table-responsive table {
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+th.nombre-descripcion,
+td.nombre-descripcion {
+    position: sticky;
+    left: 0;
+    background: #fff;
+    z-index: 2;
+    box-shadow: 2px 0 5px -2px #ccc;
+    /* Opcional: mejora visual */
+}
+thead th.nombre-descripcion {
+    z-index: 3;
+}
+/* Opcional: para que la cabecera de días también quede fija arriba */
+thead th {
+    position: sticky;
+    top: 0;
+    background: #f8f9fa;
+    z-index: 1;
+}
+
