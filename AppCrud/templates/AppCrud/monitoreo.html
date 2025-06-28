@@ -53,11 +53,11 @@
     </div>
     <div class="nav-meses">
         <button class="btn btn-mes-navegacion">
-        <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">← Mes Anterior</a>
+        <a href="{% url 'cambiarFechaMonitor_otros' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">← Mes Anterior</a>
         <span></button>
         <b>{{ mes }}/{{ anio }}</b></span>
         <button class="btn btn-mes-navegacion">
-        <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">Mes Siguiente →</a>
+        <a href="{% url 'cambiarFechaMonitor_otros' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">Mes Siguiente →</a>
         </button>
     </div>
     {% for servidor_obj, tabla_datos in registros_por_servidor.items %}
@@ -102,10 +102,9 @@
                                                 fa-circle icono-vacio
                                             {% endif %}
                                         "></i>
-                                    </div>
-                                    <div>
+                                    </div>                                    <div>
                                         <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %}"
-                                            {{ dias_mes|index:forloop.counter0 }}', {% if estado %}'{{ estado.id }}'{% else %}''{% endif %}, '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
+                                            onclick="abrirModal({{ fila.registro.id }}, '{{ dias_mes|index:forloop.counter0 }}', {% if estado %}'{{ estado.id }}'{% else %}''{% endif %}, '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
                                             <i class="fas fa-comment"></i>
                                         </button>
                                     </div>
@@ -342,9 +341,7 @@
         padding: 8px;
         border: 1px solid #dee2e6;
         background-color: #fff;
-    }
-
-    /* Indicador visual de scroll */
+    }    /* Indicador visual de scroll */
     .table-responsive::after {
         content: '';
         position: absolute;

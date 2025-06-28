@@ -840,7 +840,7 @@ def obtener_fecha(request):
     return redirect('monitoreo', hoy=hoy)
 
 
-def cambiarFechaMonitor(request):
+def cambiarFechaMonitor_admin(request):
     mes = int(request.GET.get('mes', date.today().month))
     anio = int(request.GET.get('anio', date.today().year))
     empresa_id = request.GET.get('empresa_id')
@@ -849,25 +849,33 @@ def cambiarFechaMonitor(request):
 
     nueva_fecha = date(anio, mes, 1)
 
-    if admin == "1":
-        url = reverse('monitoreo_admin', args=[nueva_fecha.strftime("%Y-%m-%d")])
-        params = f"?empresa_id={empresa_id}"
-        if servidor_id:
-            params += f"&servidor_id={servidor_id}"
-        return redirect(url + params)
-    else:
-        url = reverse('monitoreo', args=[nueva_fecha.strftime("%Y-%m-%d")])
-        params = ""
-        if servidor_id:
-            params = f"?servidor_id={servidor_id}"
-        return redirect(url + params)
-    
-    
+    url = reverse('monitoreo_admin', args=[nueva_fecha.strftime("%Y-%m-%d")])
+    params = f"?empresa_id={empresa_id}"
+    if servidor_id:
+        params += f"&servidor_id={servidor_id}"
+    return redirect(url + params)
+
+def cambiarFechaMonitor_otros(request):
+    mes = int(request.GET.get('mes', date.today().month))
+    anio = int(request.GET.get('anio', date.today().year))
+    empresa_id = request.GET.get('empresa_id')
+    servidor_id = request.GET.get('servidor_id')
+    admin = request.GET.get('admin')
+
+    nueva_fecha = date(anio, mes, 1)
+
+    url = reverse('monitoreo', args=[nueva_fecha.strftime("%Y-%m-%d")])
+    params = ""
+    if servidor_id:
+        params = f"?servidor_id={servidor_id}"
+    return redirect(url + params)
+
 def obtener_fecha_monitor_admin(request):
     hoy = now().date()
     return redirect('monitoreo_admin', hoy=hoy)
 
 
+# seccion para administrado en general
 def habilitar_deshabilitar_edicion_admin(request):
     
     if request.session["bloquear_edicion"] == True:
@@ -879,7 +887,8 @@ def habilitar_deshabilitar_edicion_admin(request):
         print("Edición deshabilitada")
         messages.warning(request, "Edición deshabilitada. No se pueden modificar los estados.")
     return redirect('monitoreo_admin',hoy=date.today())
-    
+
+#seccion para administradores de empresas    
 def habilitar_deshabilitar_edicion_otros(request):
     
     if request.session["bloquear_edicion"] == True:

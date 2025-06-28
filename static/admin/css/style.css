@@ -171,3 +171,31 @@ thead th {
     z-index: 1;
 }
 
+
+
+/* Responsive botones de monitor para pantallas pequeñas */
+@media (max-width: 995px) {
+    .nav-referencia-estados {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .nav-meses {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        align-items: center;
+    }
+    
+    .btn-mes-navegacion {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-left: 0 !important;
+        text-align: center;
+        width: 100%;
+        max-width: 300px;
+    }
+}

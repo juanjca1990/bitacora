@@ -64,11 +64,12 @@ urlpatterns = [
     path('registrarDescripcion/', registrarDescripcion, name='registrarDescripcion'),
     path('imprimirRegistroMes/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMes, name="imprimirRegistroMes"),
     path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
-    path('cambiarFechaMonitor/',cambiarFechaMonitor, name='cambiarFechaMonitor'),
+    path('cambiarFechaMonitor_admin/',cambiarFechaMonitor_admin, name='cambiarFechaMonitor_admin'),
+    path('cambiarFechaMonitor_otros/',cambiarFechaMonitor_otros, name='cambiarFechaMonitor_otros'),
     
     path('imprimirRegistroMesCompleto/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMesCompleto, name="imprimirRegistroMesCompleto"),
     path('habilitar_deshabilitar_edicion_admin/', habilitar_deshabilitar_edicion_admin, name='habilitar_deshabilitar_edicion_admin'),
-        path('habilitar_deshabilitar_edicion_otros/', habilitar_deshabilitar_edicion_otros, name='habilitar_deshabilitar_edicion_otros'),
+    path('habilitar_deshabilitar_edicion_otros/', habilitar_deshabilitar_edicion_otros, name='habilitar_deshabilitar_edicion_otros'),
     
     path('usuarios/', lista_usuarios, name='usuarios'),
     path('administradores/', lista_administradores, name='administradores'),
