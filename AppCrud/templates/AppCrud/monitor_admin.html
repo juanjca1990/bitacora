@@ -47,21 +47,22 @@
         </div>
         <div class="nav-referencia-estados" style="margin-bottom: 10px;">
             <a href="{% url 'imprimirRegistroMes' mes=mes anio=anio empresa_id=empresa.id %}" class="btn-mes-navegacion">
-                <i class="fas fa-file-pdf"></i> Imprimir registro mes
+                <i class="fas fa-file-pdf" style="color: #ffffff;"></i> Imprimir registro mes
             </a>
             <a href="{% url 'imprimirRegistroMesCompleto' mes=mes anio=anio empresa_id=empresa.id %}" class="btn-mes-navegacion" style="margin-left: 10px;">
-                <i class="fas fa-file-pdf"></i> Imprimir registro mes (completo)
+                <i class="fas fa-file-pdf" style="color: #ffffff;"></i> Imprimir registro mes (completo)
             </a>
             <a href="{% url 'habilitar_deshabilitar_edicion_admin' %}" class="btn-mes-navegacion" style="margin-left: 10px;">
-                <i class="fas fa-file-pdf"></i> deshabilitar/habilitar
+                <i class="fas fa-file-pdf" style="color: #ffffff;"></i> deshabilitar/habilitar
             </a>
+        </div>
         <div class="nav-meses">
             <button class="btn btn-mes-navegacion">
-            <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">← Mes Anterior</a>
+            <a href="{% url 'cambiarFechaMonitor_admin' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">← Mes Anterior</a>
             <span></button>
             <b>{{ mes }}/{{ anio }}</b></span>
             <button class="btn btn-mes-navegacion">
-            <a href="{% url 'cambiarFechaMonitor' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">Mes Siguiente →</a>
+            <a href="{% url 'cambiarFechaMonitor_admin' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}&empresa_id={{ empresa.id }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}&admin=1">Mes Siguiente →</a>
             </button>
         </div>
         {% if registros_por_servidor %}
@@ -268,9 +269,9 @@
 <style>
     /* Estilos para los botones de navegación de mes */
     .btn-mes-navegacion {
-        background-color: {{ empresa.visual_empresa.colorPrimario }} !important;
-        border-color: {{ empresa.visual_empresa.colorPrimario }} !important;
-        color: {{ empresa.visual_empresa.colorSecundario }} !important;
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+        color: #ffffff !important;
         border: 1px solid;
         padding: 8px 12px;
         border-radius: 4px;
@@ -280,22 +281,22 @@
     }
 
     .btn-mes-navegacion:hover {
-        background-color: {{ empresa.visual_empresa.colorPrimario }} !important;
-        border-color: {{ empresa.visual_empresa.colorPrimario }} !important;
-        color: {{ empresa.visual_empresa.colorSecundario }} !important;
+        background-color: #007bff !important;
+        border-color: #007bff !important;
+        color: #ffffff !important;
         opacity: 0.8;
     }
 
     .btn-mes-navegacion a {
-        color: {{ empresa.visual_empresa.colorSecundario }} !important;
+        color: #ffffff !important;
         text-decoration: none;
         display: block;
     }    .btn-mes-navegacion a:hover {
-        color: {{ empresa.visual_empresa.colorSecundario }} !important;
+        color:#ffffff !important;
         text-decoration: none;
     }    /* Estilos para tabla con header fijo - Monitor Admin */
     .table-responsive {
-        max-height: 70vh; /* Altura máxima del contenedor */
+        max-height: 90vh; /* Altura máxima del contenedor */
         overflow: auto; /* Permitir scroll horizontal y vertical */
         border: 1px solid #dee2e6;
         border-radius: 0.375rem;
@@ -354,9 +355,7 @@
         padding: 8px;
         border: 1px solid #dee2e6;
         background-color: #fff;
-    }
-
-    /* Indicador visual de scroll */
+    }    /* Indicador visual de scroll */
     .table-responsive::after {
         content: '';
         position: absolute;
