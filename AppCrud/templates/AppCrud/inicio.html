@@ -10,7 +10,7 @@
                 {% if user.is_authenticated %}
                     <div class="list-group">
                         {% if user.is_superuser %}
-                            <a class="list-group-item list-group-item-action list-group-item-dark mb-2" href="{% url 'obtener_fecha_monitor_admin' %}" type="button">
+                            <a class="list-group-item list-group-item-action list-group-item-dark mb-2" href="{% url 'obtener_fecha_monitor_admin' %}?vista=semana" type="button">
                                 <i class="fas fa-desktop fa-fw me-2"></i> Monitoreo
                             </a>
                         {% else %}
