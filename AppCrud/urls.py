@@ -66,6 +66,10 @@ urlpatterns = [
     path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
     path('cambiarFechaMonitor_admin/',cambiarFechaMonitor_admin, name='cambiarFechaMonitor_admin'),
     path('cambiarFechaMonitor_otros/',cambiarFechaMonitor_otros, name='cambiarFechaMonitor_otros'),
+    path('cambiarSemanaMonitor_admin/',cambiarSemanaMonitor_admin, name='cambiarSemanaMonitor_admin'),
+    path('cambiarSemanaMonitor_otros/',cambiarSemanaMonitor_otros, name='cambiarSemanaMonitor_otros'),
+    path('cambiarMesMonitor_admin/',cambiarMesMonitor_admin, name='cambiarMesMonitor_admin'),
+    path('cambiarMesMonitor_otros/',cambiarMesMonitor_otros, name='cambiarMesMonitor_otros'),
     
     path('imprimirRegistroMesCompleto/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMesCompleto, name="imprimirRegistroMesCompleto"),
     path('habilitar_deshabilitar_edicion_admin/', habilitar_deshabilitar_edicion_admin, name='habilitar_deshabilitar_edicion_admin'),

@@ -36,7 +36,7 @@
                         <li>
                         {% if user.is_superuser %}
                                 <li class="nav-item">
-                                    <a class="nav-link" href="{% url 'obtener_fecha_monitor_admin' %}">Monitoreo</a>
+                                    <a class="nav-link" href="{% url 'obtener_fecha_monitor_admin' %}?vista=semana">Monitoreo</a>
                                 </li>
                             {% else %}
                                 <li class="nav-item">
@@ -107,7 +107,7 @@
                         <!-- Gestión Dropdown -->
                         {% if user.is_superuser %}
                             <li class="nav-item">
-                                <a class="nav-link" href="{% url 'obtener_fecha_monitor_admin' %}">Monitoreo</a>
+                                <a class="nav-link" href="{% url 'obtener_fecha_monitor_admin' %}?vista=semana">Monitoreo</a>
                             </li>
                         {% else %}
                             <li class="nav-item">
