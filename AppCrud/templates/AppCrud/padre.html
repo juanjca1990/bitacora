@@ -6,6 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="nofollow" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'admin/css/style.css' %}">
+    <link rel="stylesheet" href="{% static 'AppCrud/css/estilos-corporativos.css' %}">
     <title>{% block title %}
         {% endblock %}</title>
     
@@ -191,6 +193,12 @@
     </footer>
 </body>
     <style>
+        /* Variables CSS para usar en el archivo externo */
+        :root {
+            --color-primario-empresa: {{ user.empresa.visual_empresa.colorPrimario }};
+            --color-secundario-empresa: {{ user.empresa.visual_empresa.colorSecundario }};
+        }
+        
         /* Estilo para la barra de navegación */
         body{
             background-color: {{ user.empresa.visual_empresa.colorSecundario }};

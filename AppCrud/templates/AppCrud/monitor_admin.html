@@ -14,14 +14,16 @@
     </div>
     {% else %}
         <form method="get" class="mb-3" id="empresa-servidor-form">
-            <div class="form-row align-items-center">                <div class="col-auto">
+            <div class="form-row align-items-center"> 
+                <div class="col-auto">
                     <label for="empresa_id">Empresa:</label>
                     <select name="empresa_id" id="empresa_id" class="form-control" onchange="cambiarEmpresa();">
                         {% for emp in empresas %}
                             <option value="{{ emp.id }}" {% if emp.id == empresa.id %}selected{% endif %}>{{ emp.nombre }}</option>
                         {% endfor %}
                     </select>
-                </div>                <div class="col-auto">
+                </div>
+                <div class="col-auto">
                     <label for="servidor_id">Servidor:</label>
                     <select name="servidor_id" id="servidor_id" class="form-control" onchange="document.getElementById('empresa-servidor-form').submit();">
                         {% for servidor in servidores %}

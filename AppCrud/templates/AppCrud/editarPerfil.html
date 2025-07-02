@@ -8,14 +8,58 @@
 
     <form action="{% url 'EditarPerfil'  %}" method="POST"> {% csrf_token %}
 
-        <table>
+        <table class="table table-corporativa">
         
             {{ form.as_table }}
         
         </table>
         
-        <input type="submit" value="MODIFICAR USUARIO">
+        <input type="submit" value="MODIFICAR USUARIO" class="btn btn-corporativo">
         
         
-     </form>
+     </form>     
+
+         <style>
+        /* Estilos corporativos para tablas */
+        .table-corporativa thead th {
+            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            border: none !important;
+        }
+        
+        .table-corporativa tbody tr:nth-child(odd) {
+            background-color: #f8f9fa !important;
+        }
+        
+        .table-corporativa tbody tr:nth-child(even) {
+            background-color: white !important;
+        }
+        
+        .table-corporativa tbody tr:hover {
+            background-color: #e9ecef !important;
+        }
+        
+        .btn-corporativo {
+            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            border-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            margin: 2px !important;
+            padding: 6px 12px !important;
+            font-size: 0.8rem !important;
+            border-radius: 4px !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .btn-corporativo:hover {
+            background-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            border-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            text-decoration: none !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+        }
+    </style>
 {% endblock %}

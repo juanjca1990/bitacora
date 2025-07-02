@@ -4,7 +4,7 @@
     <div class="container">
         <h1 class="mt-5">LISTA EMPRESAS</h1>
         <div class="table-responsive mt-3">
-            <table class="table">
+            <table class="table table-corporativa">
                 <thead class="bg-light">
                     <tr>
                         <th scope="col">Empresa</th>
@@ -21,10 +21,10 @@
                                 <th scope="row">{{ empresa.nombre }}</th>
                                 {% if empresa_admin %}
                                     <td>
-                                        <a class="btn btn-danger btn-sm" href="{% url 'borrarEmpresa' empresa.id %}">Eliminar</a>
+                                        <a class="btn-corporativo" href="{% url 'borrarEmpresa' empresa.id %}">Eliminar</a>
                                     </td>
                                     <td>
-                                        <a class="btn btn-success btn-sm" href="{% url 'editarEmpresa' empresa.id %}">Editar</a>
+                                        <a class="btn-corporativo" href="{% url 'editarEmpresa' empresa.id %}">Editar</a>
                                     </td>
                                 {% endif %}
                             </tr>
@@ -34,7 +34,7 @@
             </table>
         </div>
         {% if empresa_admin %}
-            <a href="{% url 'EmpresaForm' %}" type="button" class="btn btn-primary mt-2">Agregar empresa</a>
+            <a href="{% url 'EmpresaForm' %}" type="button" class="btn-corporativo mt-2">Agregar empresa</a>
         {% endif %}
     </div>
 {% endblock %}
