@@ -31,7 +31,7 @@ def contacto(request):
     usuario = request.user
     return render(request, "AppCrud/contacto.html", {
         "contactos_by_empresa": contactos_by_empresa,
-        "admin_perm": usuario.has_perm('AppCrud.empresa_admin')
+        "admin_perm": usuario.has_perm('AppCrud.empresa_admin'),
     })
 
 

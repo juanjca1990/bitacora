@@ -376,13 +376,19 @@ def monitoreo(request, hoy):
 
     registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
 
-    # Verifica si la edición está bloqueada
-    if request.session.get("bloquear_edicion", False):
+    # Verifica si la edición está bloqueada o si el usuario no tiene permisos
+    # Los usuarios que no son superuser ni staff no pueden modificar estados
+    usuario_puede_editar = usuario.is_superuser or usuario.is_staff
+    
+    if request.session.get("bloquear_edicion", False) or not usuario_puede_editar:
         hoy_real = now().date()
         dias_no_modificables = [
             dia.weekday() in [5, 6] or dia <= (hoy_real - timedelta(days=7))
             for dia in dias_periodo
         ]
+        # Si el usuario no puede editar, marcar todos los días como no modificables
+        if not usuario_puede_editar:
+            dias_no_modificables = [True for dia in dias_periodo]
     else:
         dias_no_modificables = [dia.weekday() in [5, 6] for dia in dias_periodo]
 
@@ -405,12 +411,19 @@ def monitoreo(request, hoy):
         "empresa": empresa,
         "servidores": Servidor.objects.filter(empresa=empresa),
         "servidor_id": int(servidor_id) if servidor_id else None,
+        "usuario_puede_editar": usuario_puede_editar,
     })
 
 @csrf_exempt
+@login_required
 def registrarEstado(request):
     if request.method == "POST":
         try:
+            # Verificar si el usuario tiene permisos para editar
+            usuario = request.user
+            if not (usuario.is_superuser or usuario.is_staff):
+                return JsonResponse({"success": False, "error": "No tiene permisos para modificar estados"})
+            
             print("Estoy en el try de registrarEstado")
             data = json.loads(request.body)
             registro_id = data.get("registro_id")
@@ -454,9 +467,15 @@ def registrarEstado(request):
     return JsonResponse({"success": False, "error": "Método no permitido"})
 
 @csrf_exempt
+@login_required
 def registrarDescripcion(request):
     if request.method == "POST":
         try:
+            # Verificar si el usuario tiene permisos para editar
+            usuario = request.user
+            if not (usuario.is_superuser or usuario.is_staff):
+                return JsonResponse({"success": False, "error": "No tiene permisos para modificar descripciones"})
+            
             data = json.loads(request.body)
             registro_id = data.get("registro_id")
             fecha = data.get("fecha")
