@@ -143,7 +143,7 @@ def empresa_otros(request):
     empresa = usuario.empresa
     return render(request, "AppCrud/empresa_otros.html", {
         "empresa": empresa,
-        "empresa_admin": usuario
+        "user": usuario
     })
     
 

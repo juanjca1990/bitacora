@@ -31,7 +31,8 @@ def register(request):
 @login_required
 @permission_required('AppCrud.add_user', raise_exception=True)
 def registerOption(request):
-    return render (request, "AppCrud/registroUserOpcion.html")
+    usuario = request.user
+    return render(request, "AppCrud/registroUserOpcion.html", {"user": usuario})
 
 @login_required
 @permission_required('AppCrud.add_user', raise_exception=True)
@@ -47,12 +48,50 @@ def registerAdmin(request):
             usuario.is_staff = True  # Asegúrate de que el usuario sea staff
             usuario.save()
 
-            # Asigna el grupo de admin de la empresa
-            group = Group.objects.get(name=f"{empresa.nombre}_admin")
-            usuario.groups.clear()
-            usuario.groups.add(group)
+            # Crear o actualizar el grupo de admin de la empresa con todos los permisos necesarios
+            group_admin, created = Group.objects.get_or_create(name=f"{empresa.nombre}_admin_empresa")
+            
+            # Lista de permisos necesarios para administradores
+            permission_codenames = [
+                # Permisos para Usuario
+                'view_user', 'add_user', 'change_user', 'delete_user',
+                # Permisos para Bitacora
+                'view_bitacora', 'add_bitacora', 'change_bitacora', 'delete_bitacora',
+                # Permisos para Contacto
+                'view_contacto', 'add_contacto', 'change_contacto', 'delete_contacto',
+                # Permisos para Job
+                'view_job', 'add_job', 'change_job', 'delete_job',
+                # Permisos para Aviso
+                'view_aviso', 'add_aviso', 'change_aviso', 'delete_aviso',
+                # Permisos para Empresa
+                'view_empresa', 'change_empresa',
+                # Permisos para Servidor
+                'view_servidor', 'add_servidor', 'change_servidor', 'delete_servidor',
+                # Permisos para Registro
+                'view_registro', 'add_registro', 'change_registro', 'delete_registro',
+                # Permisos para Estado
+                'view_estado', 'add_estado', 'change_estado', 'delete_estado',
+                # Permiso personalizado para administrador de empresa
+                'empresa_admin'
+            ]
+            
+            # Obtener permisos que existen en la base de datos
+            permissions_to_add = []
+            for codename in permission_codenames:
+                try:
+                    permission = Permission.objects.get(codename=codename)
+                    permissions_to_add.append(permission)
+                except Permission.DoesNotExist:
+                    print(f"Advertencia: El permiso '{codename}' no existe en la base de datos")
+            
+            # Asignar permisos al grupo
+            group_admin.permissions.set(permissions_to_add)
 
-            return redirect('./inicio/', {"mensaje": f"Usuario {usuario.username} ahora es administrador de {empresa.nombre}"})
+            # Asigna el grupo de admin al usuario
+            usuario.groups.clear()
+            usuario.groups.add(group_admin)
+
+            return redirect('./inicio/', {"mensaje": f"Usuario {usuario.username} ahora es administrador de {empresa.nombre} con todos los permisos necesarios"})
         else:
             return render(request, "AppCrud/registrarUsuario.html", {"form": form, "mensaje": "Error al asignar administrador", "tipo": "Administrador"})
     else:
@@ -156,3 +195,48 @@ def lista_administradores(request):
     return render(request, "AppCrud/lista_administradores.html", {
         "administradores": admin_obj,
     })
+    
+@login_required
+def register_user_vista_admin(request, empresa_id):
+    empresa = get_object_or_404(Empresa, id=empresa_id)
+    
+    if request.method == "POST":
+        form = RegistroUsuarioForm(request.POST)
+        # Remove empresa field since it's automatically assigned
+        if 'empresa' in form.fields:
+            del form.fields['empresa']
+            
+        if form.is_valid():
+            user = form.save(commit=False)
+            usernm = form.cleaned_data.get("username")
+
+            # Always assign the empresa from URL parameter
+            user.empresa = empresa
+            user.save()
+
+            # Assign group according to empresa
+            try:
+                group = Group.objects.get(name=empresa.nombre)
+                user.groups.add(group)
+            except Group.DoesNotExist:
+                # If group doesn't exist, create it or handle the error
+                pass
+
+            return redirect('inicio')
+        else:
+            return render(request, "AppCrud/registrarUsuarioVistaAdmin.html", {
+                "form": form, 
+                "mensaje": "Error al crear el usuario", 
+                "tipo": "Usuario", 
+                "empresa": empresa
+            })
+    else:
+        form = RegistroUsuarioForm()
+        # Remove empresa field since it will be shown in template as read-only info
+        if 'empresa' in form.fields:
+            del form.fields['empresa']
+        return render(request, "AppCrud/registrarUsuarioVistaAdmin.html", {
+            "form": form, 
+            "tipo": "Usuario", 
+            "empresa": empresa
+        })

@@ -1,0 +1,11 @@
+{% extends "AppCrud/formularios.html" %}
+{% block titulo %} <h1 class="text-center"> Registrar {{ tipo }}</h1> {% endblock %}
+{% block formulario %} 
+    {% csrf_token %}
+    {% if empresa %}
+        <div class="alert alert-info">
+            <strong>Empresa:</strong> {{ empresa.nombre }}
+        </div>
+    {% endif %}
+    {{ form.as_p }}
+{% endblock %}
