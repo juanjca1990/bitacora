@@ -73,7 +73,7 @@
                         <li class="has-submenu">
                             <a href="#">Usuarios <span class="submenu-arrow">&#9656;</span></a>
                             <ul class="submenu">
-                                {% if user.is_superuser %}
+                                {% if user.is_superuser or user.is_staff %}
                                     <li><a href="{% url 'RegisterOption' %}">Registrar Usuario</a></li>
                                 {% endif %}
                                 <li><a href="{% url 'EditarPerfil' %}">Editar Perfil ({{ user.username }})</a></li>
@@ -154,7 +154,7 @@
                                 Usuarios
                             </a>
                             <div class="dropdown-menu" aria-labelledby="usuariosDropdown">
-                                {% if user.is_superuser %}
+                                {% if user.is_superuser or user.is_staff %}
                                     <a class="dropdown-item" href="{% url 'RegisterOption' %}">Registrar Usuario</a>
                                 {% endif %}
                                 <a class="dropdown-item" href="{% url 'EditarPerfil' %}">Editar Perfil ({{ user.username }})</a>

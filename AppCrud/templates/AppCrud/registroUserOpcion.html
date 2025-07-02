@@ -4,6 +4,7 @@
     <div class="container mt-5">
         <div class="row justify-content-center">
             <div class="col-md-6">
+                {% if user.is_superuser %}
                 <div class="text-center">
                     <h4 class="mb-4">Registrar Usuario</h4>
                     <a href="{% url 'Register'  %}" class="btn btn-primary"><i class="fas fa-user-plus mr-2"></i>Registrar</a>
@@ -12,15 +13,15 @@
                     <h4 class="mb-4">Registrar Administrador de Empresa</h4>
                     <a href="{% url 'RegisterAdmin'  %}" class="btn btn-primary"><i class="fas fa-user-cog mr-2"></i>Registrar</a>
                 </div>
+                {% else %}
+                <div class="text-center">
+                    <h4 class="mb-4">Registrar Usuario</h4>
+                    <a href="{% url 'Register_user_vista_admin' user.empresa.id  %}" class="btn btn-primary"><i class="fas fa-user-plus mr-2"></i>Registrar</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
     <script src="https://kit.fontawesome.com/e5f110c7fd.js" crossorigin="anonymous"></script>
 
-    <style>
-
-        label,span,h1,h2,h3,h4,h5,h6 {
-            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-        }
-    </style>
 {% endblock %}
