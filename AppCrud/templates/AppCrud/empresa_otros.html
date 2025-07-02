@@ -1,0 +1,25 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %} Empresa {% endblock %}
+{% block bloque %}
+    <div class="container">
+        <h1 class="mt-5"> {{ empresa.nombre }} </h1>
+        <div class="table-responsive mt-3">
+            <table class="table table-corporativa">
+                <thead class="bg-light">
+                    <tr>
+                        <th scope="col">Empresa</th>
+                        <th scope="col">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <th scope="row">{{ empresa.nombre }}</th>
+                        <td>
+                            <a class="btn-corporativo" href="{% url 'editarEmpresa_otros'  empresa.id %}">Editar</a>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

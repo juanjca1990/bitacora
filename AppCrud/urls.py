@@ -27,6 +27,8 @@ urlpatterns = [
     path('borrarBitacora/<id>', borrarBitacora, name="borrarBitacora"),
 
     path('empresa/', empresa,name='empresa'),
+    path('empresa_otros/', empresa_otros, name='empresa_otros'),
+    path('editarEmpresa_otros/<id>', editarEmpresa_otros, name='editarEmpresa_otros'),
     path('empresaForm', empresaForm, name="EmpresaForm"),
     path('editarEmpresa/<id>', editarEmpresa, name="editarEmpresa"),
     path('borrarEmpresa/<id>', borrarEmpresa, name="borrarEmpresa"),
