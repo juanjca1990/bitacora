@@ -10,7 +10,7 @@
         <button type="submit" class="btn btn-primary">Buscar</button>
     </form>
 
-    <table class="table table-bordered table-striped mt-3">
+    <table class="table table-bordered table-striped table-corporativa mt-3">
         <thead class="bg-light">
             <tr>
                 <th>Usuario</th>
@@ -63,5 +63,26 @@
             {% endif %}
         </ul>
     </nav>
+
+    <style>
+        /* Estilos corporativos para tablas */
+        .table-corporativa thead th {
+            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            border: none !important;
+        }
+        
+        .table-corporativa tbody tr:nth-child(odd) {
+            background-color: #f8f9fa !important;
+        }
+        
+        .table-corporativa tbody tr:nth-child(even) {
+            background-color: white !important;
+        }
+        
+        .table-corporativa tbody tr:hover {
+            background-color: #e9ecef !important;
+        }
+    </style>
 </div>
 {% endblock %}

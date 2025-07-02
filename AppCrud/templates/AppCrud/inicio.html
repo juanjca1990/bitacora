@@ -2,32 +2,30 @@
 {% block title %}Inicio{% endblock %}
 {% block bloque %}
     <div class="container mt-5">
-        <h1 class="text-center mb-4">Inicio</h1>
-
         <div class="row justify-content-center">
-            <div class="col-md-6">
+            <div class="col-md-8 col-lg-6">
                 {{ mensaje }}
                 {% if user.is_authenticated %}
-                    <div class="list-group">
+                    <div class="list-group text-center">
                         {% if user.is_superuser %}
-                            <a class="list-group-item list-group-item-action list-group-item-dark mb-2" href="{% url 'obtener_fecha_monitor_admin' %}?vista=semana" type="button">
+                            <a class="list-group-item list-group-item-action list-group-item-dark mb-3 text-center" href="{% url 'obtener_fecha_monitor_admin' %}?vista=semana" type="button">
                                 <i class="fas fa-desktop fa-fw me-2"></i> Monitoreo
                             </a>
                         {% else %}
-                            <a class="list-group-item list-group-item-action list-group-item-dark mb-2" href="{% url 'obtener_fecha' %}" type="button"> 
+                            <a class="list-group-item list-group-item-action list-group-item-dark mb-3 text-center" href="{% url 'obtener_fecha' %}" type="button"> 
                                 <i class="fas fa-desktop fa-fw me-2"></i> Monitoreo 
                             </a>
                         {% endif %}
-                        <a class="list-group-item list-group-item-action list-group-item-primary mb-2" href="{% url 'bitacora'  %}" type="button">
+                        <a class="list-group-item list-group-item-action list-group-item-primary mb-3 text-center" href="{% url 'bitacora'  %}" type="button">
                             <i class="fas fa-calendar-check fa-fw me-2"></i> Bitacoras
                         </a>
-                        <a class="list-group-item list-group-item-action list-group-item-success mb-2" href="{% url 'job'  %}" type="button">
+                        <a class="list-group-item list-group-item-action list-group-item-success mb-3 text-center" href="{% url 'job'  %}" type="button">
                             <i class="fas fa-briefcase fa-fw me-2"></i> Jobs
                         </a>
-                        <a class="list-group-item list-group-item-action list-group-item-info mb-2" href="{% url 'contacto'  %}" type="button" >
+                        <a class="list-group-item list-group-item-action list-group-item-info mb-3 text-center" href="{% url 'contacto'  %}" type="button" >
                             <i class="fas fa-address-book fa-fw me-2"></i> Contactos
                         </a>
-                        <a class="list-group-item list-group-item-action list-group-item-warning mb-2" href="{% url 'aviso'  %}" type="button" >
+                        <a class="list-group-item list-group-item-action list-group-item-warning mb-3 text-center" href="{% url 'aviso'  %}" type="button" >
                             <i class="fas fa-exclamation-circle fa-fw me-2"></i> Avisos
                         </a>
                     </div>

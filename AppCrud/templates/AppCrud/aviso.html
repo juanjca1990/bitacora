@@ -4,7 +4,7 @@
     <div class="container mt-5">
         <h1 class="mt-5">LISTA AVISOS</h1>
         <div class="table-responsive mt-3">
-            <table class="table table-bordered table-striped custom-table">
+            <table class="table table-bordered table-striped table-corporativa">
                 <thead class="bg-light">
                     <tr>
                         <th scope="col">Empresa</th>
@@ -29,10 +29,10 @@
                                 <td>{{ aviso.contacto }}</td>
                                 {% if admin_perm %}
                                     <td>
-                                        <a class="btn btn-danger btn-sm" href="{% url 'borrarAviso' aviso.id %}">Eliminar</a>
+                                        <a class="btn-corporativo" href="{% url 'borrarAviso' aviso.id %}">Eliminar</a>
                                     </td>
                                     <td>
-                                        <a class="btn btn-success btn-sm" href="{% url 'editarAviso' aviso.id %}">Editar</a>
+                                        <a class="btn-corporativo" href="{% url 'editarAviso' aviso.id %}">Editar</a>
                                     </td>
                                 {% endif %}
                             </tr>
@@ -42,17 +42,51 @@
             </table>
         </div>
         {% if admin_perm %}
-            <a href="{% url 'AvisoForm' %}" type="button" class="btn btn-primary mt-2">Agregar aviso</a>
+            <a href="{% url 'AvisoForm' %}" type="button" class="btn-corporativo mt-2">Agregar aviso</a>
         {% endif %}
     </div>
-    <style>
-        /* Custom table styles */
-        .custom-table tbody tr:nth-child(odd) {
-            background-color: #f8f9fa;
-        }
 
-        .custom-table tbody tr:hover {
-            background-color: #e9ecef;
+        <style>
+        /* Estilos corporativos para tablas */
+        .table-corporativa thead th {
+            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            border: none !important;
+        }
+        
+        .table-corporativa tbody tr:nth-child(odd) {
+            background-color: #f8f9fa !important;
+        }
+        
+        .table-corporativa tbody tr:nth-child(even) {
+            background-color: white !important;
+        }
+        
+        .table-corporativa tbody tr:hover {
+            background-color: #e9ecef !important;
+        }
+        
+        .btn-corporativo {
+            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            border-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            margin: 2px !important;
+            padding: 6px 12px !important;
+            font-size: 0.8rem !important;
+            border-radius: 4px !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .btn-corporativo:hover {
+            background-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            border-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            text-decoration: none !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
         }
     </style>
 {% endblock %}
