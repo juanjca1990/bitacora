@@ -477,6 +477,58 @@ def borrarEmpresa(request, id):
     usuario = request.user
     return redirect('../empresa/',{"empresas":empresas,"empresa_admin":usuario.has_perm('AppCrud.empresa_admin')})
 
+@login_required
+def empresa_otros(request):
+    """Vista para usuarios que solo pueden ver y editar su propia empresa"""
+    usuario = request.user
+    if not usuario.empresa:
+        # Si el usuario no tiene empresa asignada, redirigir con mensaje de error
+        return redirect('../inicio/', {"mensaje": "No tienes una empresa asignada"})
+    
+    empresa = usuario.empresa
+    return render(request, "AppCrud/empresa_otros.html", {
+        "empresa": empresa,
+        "empresa_admin": usuario
+    })
+    
+@login_required
+def editarEmpresa_otros(request,id):
+    """Vista para que los usuarios editen solo su propia empresa"""
+    usuario = request.user
+    if not usuario.empresa:
+        # Si el usuario no tiene empresa asignada, redirigir con mensaje de error
+        return redirect('../inicio/', {"mensaje": "No tienes una empresa asignada"})
+    
+    empresa = Empresa.objects.get(id=id)
+    
+    if request.method == "POST":
+        empresa_form = EmpresaVisualForm(request.POST, request.FILES, instance=empresa)
+        if empresa_form.is_valid():
+            empresa = empresa_form.save(commit=False)
+            # Check if a new logo file was uploaded
+            if 'logo' in request.FILES:
+                visual_empresa = VisualEmpresa(colorPrimario=request.POST['colorPrimario'],
+                                               colorSecundario=request.POST['colorSecundario'],
+                                               logo=request.FILES['logo'])
+                visual_empresa.save()
+                empresa.visual_empresa = visual_empresa
+            else:
+                # Keep the previous logo file
+                empresa.visual_empresa.colorPrimario = request.POST['colorPrimario']
+                empresa.visual_empresa.colorSecundario = request.POST['colorSecundario']
+                
+            empresa.visual_empresa.save()
+            empresa.save()
+            return redirect('../empresa_otros/', {"mensaje": "Empresa actualizada correctamente"})
+    else:
+        empresa_form = EmpresaVisualForm(initial={"nombre":empresa.nombre,"colorPrimario":empresa.visual_empresa.colorPrimario,"colorSecundario":empresa.visual_empresa.colorSecundario,"logo":empresa.visual_empresa.logo})
+    
+    return render(request, "AppCrud/editarEmpresa.html", {
+        "empresa_form": empresa_form, 
+        "empresa": empresa,
+        "es_empresa_otros": True  # Flag para distinguir en el template
+    })
+
 def login_request(request):
     if request.method=="POST":
         form=AuthenticationForm(request, data=request.POST)

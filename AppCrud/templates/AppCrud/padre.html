@@ -58,6 +58,9 @@
                                 {% if user.is_superuser %}
                                     <li><a href="{% url 'empresa' %}">Empresas</a></li>
                                 {% endif %}
+                                {% if user.is_staff %}
+                                    <li><a class="dropdown-item" href="{% url 'empresa_otros' %}">Empresas</a></li>
+                                {% endif %}
                             </ul>
                         </li>
                         <li class="has-submenu">
@@ -129,6 +132,9 @@
                                 {% endif %}
                                 {% if user.is_superuser %}
                                     <a class="dropdown-item" href="{% url 'empresa' %}">Empresas</a>
+                                {% endif %}
+                                {% if user.is_staff %}
+                                    <a class="dropdown-item" href="{% url 'empresa_otros' %}">Empresas</a>
                                 {% endif %}
                             </div>
                         </li>
