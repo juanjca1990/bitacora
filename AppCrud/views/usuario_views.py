@@ -123,6 +123,8 @@ def login_request(request):
     if request.method=="POST":
         form=AuthenticationForm(request, data=request.POST)
         if form.is_valid():
+            # borro por si quedo registro en la sesion
+            request.session['admin'] = False
             info=form.cleaned_data
             usu=info["username"]
             clave=info["password"]
@@ -155,8 +157,8 @@ def cambiar_usuario(request):
         return redirect('inicio')
     # Si GET, muestra la página normalmente
     print("fue un GET")
-    request.session['admin'] = True
-    return redirect('inicio')
+    # request.session['admin'] = True
+    # return redirect('inicio')
 
 @login_required
 def logout_request(request):
