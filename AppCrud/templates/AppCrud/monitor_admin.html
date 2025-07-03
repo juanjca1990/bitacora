@@ -130,8 +130,9 @@
                                                     "></i>
                                                 </div>
                                                 <div>
-                                                    <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %}"
-                                                        onclick="abrirModal({{ fila.registro.id }}, '{{ dias_periodo|index:forloop.counter0 }}', {% if estado %}'{{ estado.id }}'{% else %}''{% endif %}, '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
+                                                    <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %} descripcion-btn-deshabilitado"
+                                                        data-tooltip="{% if estado.descripcion %}{{ estado.descripcion|escapejs }}{% else %}Sin comentarios{% endif %}"
+                                                        onmouseenter="mostrarTooltip(this)" onmouseleave="ocultarTooltip()">
                                                         <i class="fas fa-comment"></i>
                                                     </button>
                                                 </div>
@@ -195,6 +196,9 @@
         <p>Actualizando...</p>
     </div>
 </div>
+
+<!-- Tooltip para comentarios -->
+<div id="comentario-tooltip" class="tooltip-comentario"></div>
 <script>
     let modal = document.getElementById("modalDescripcion");
     let registroIdGlobal, fechaGlobal, estadoIdGlobal, servidorIdGlobal, empresaIdGlobal;
@@ -296,7 +300,44 @@
             ocultarSpinner();
             alert("Error de conexión al guardar la descripción.");
         });
-    }    function getCookie(name) {
+    }
+
+    function mostrarComentarioSoloLectura(descripcion) {
+        // Esta función ya no es necesaria, pero la dejamos para compatibilidad
+        return;
+    }
+
+    function mostrarTooltip(element) {
+        const tooltip = document.getElementById('comentario-tooltip');
+        const comentario = element.getAttribute('data-tooltip');
+        
+        tooltip.textContent = comentario;
+        tooltip.style.display = 'block';
+        
+        // Posicionar el tooltip cerca del elemento
+        const rect = element.getBoundingClientRect();
+        tooltip.style.left = (rect.left + window.pageXOffset) + 'px';
+        tooltip.style.top = (rect.top + window.pageYOffset - tooltip.offsetHeight - 10) + 'px';
+        
+        // Asegurar que el tooltip no se salga de la pantalla
+        const tooltipRect = tooltip.getBoundingClientRect();
+        if (tooltipRect.right > window.innerWidth) {
+            tooltip.style.left = (window.innerWidth - tooltipRect.width - 10) + 'px';
+        }
+        if (tooltipRect.left < 0) {
+            tooltip.style.left = '10px';
+        }
+        if (tooltipRect.top < 0) {
+            tooltip.style.top = (rect.bottom + window.pageYOffset + 10) + 'px';
+        }
+    }
+
+    function ocultarTooltip() {
+        const tooltip = document.getElementById('comentario-tooltip');
+        tooltip.style.display = 'none';
+    }
+
+    function getCookie(name) {
         let cookieValue = null;
         if (document.cookie && document.cookie !== '') {
             document.cookie.split(';').forEach(cookie => {
@@ -404,6 +445,47 @@
         display: inline-flex;
         align-items: center;
         justify-content: center;
+    }
+
+    /* Estilos para botón de comentario deshabilitado */
+    .descripcion-btn-deshabilitado {
+        opacity: 0.5;
+        cursor: not-allowed !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+
+    .descripcion-btn-deshabilitado:hover {
+        opacity: 0.5 !important;
+        background-color: #6c757d !important;
+        border-color: #6c757d !important;
+    }
+
+    /* Estilos para el tooltip de comentarios */
+    .tooltip-comentario {
+        position: absolute;
+        background-color: #333;
+        color: white;
+        padding: 8px 12px;
+        border-radius: 4px;
+        font-size: 14px;
+        max-width: 300px;
+        word-wrap: break-word;
+        z-index: 10002;
+        display: none;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        pointer-events: none;
+    }
+
+    .tooltip-comentario::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #333 transparent transparent transparent;
     }
     
     /* Estilo para botón activo de vista */
