@@ -167,6 +167,7 @@ def logout_request(request):
     return redirect('Login')
 
 @login_required
+# lista todos los usuarios de las empresas excluyendo los administradores
 def lista_usuarios(request):
     User = get_user_model()
     q_usuarios = request.GET.get('q_usuarios', '')
@@ -183,6 +184,7 @@ def lista_usuarios(request):
     })
 
 @login_required
+#lista todos los administradores de las empresas, incluyendo los superusuarios
 def lista_administradores(request):
     User = get_user_model()
     q_admins = request.GET.get('q_admins', '')
@@ -198,6 +200,41 @@ def lista_administradores(request):
         "administradores": admin_obj,
     })
     
+    
+@login_required
+#lista los usuarios de una empresa en particular, excluyendo los administradores
+def lista_usuarios_empresa(request, empresa_id): 
+    User = get_user_model()
+    q_usuarios = request.GET.get('q_usuarios', '')
+    usuarios = User.objects.filter(is_superuser=False, empresa_id=empresa_id).exclude(groups__name__endswith='_admin')
+    if q_usuarios:
+        usuarios = usuarios.filter(
+            Q(username__icontains=q_usuarios) | Q(email__icontains=q_usuarios)
+        )
+    usuarios_paginator = Paginator(usuarios.distinct(), 10)
+    usuarios_page = request.GET.get('usuarios_page', 1)
+    usuarios_obj = usuarios_paginator.get_page(usuarios_page)
+    return render(request, "AppCrud/lista_usuarios_empresa.html", {
+        "usuarios": usuarios_obj,
+    })   
+    
+@login_required
+#lista los administradores de una empresa en particular, incluyendo los superusuarios
+def lista_administradores_empresa(request, empresa_id):
+    User = get_user_model()
+    q_admins = request.GET.get('q_admins', '')
+    administradores = User.objects.filter(is_superuser=True, empresa_id=empresa_id) | User.objects.filter(groups__name__endswith='_admin', empresa_id=empresa_id)
+    if q_admins:
+        administradores = administradores.filter(
+            Q(username__icontains=q_admins) | Q(email__icontains=q_admins)
+        )
+    admin_paginator = Paginator(administradores.distinct(), 10)
+    admin_page = request.GET.get('admin_page', 1)
+    admin_obj = admin_paginator.get_page(admin_page)
+    return render(request, "AppCrud/lista_administradores_empresa.html", {
+        "administradores": admin_obj,
+    })
+
 @login_required
 def register_user_vista_admin(request, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)

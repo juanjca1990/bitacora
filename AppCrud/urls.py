@@ -54,6 +54,8 @@ urlpatterns = [
     path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
     path('usuarios/', lista_usuarios, name='usuarios'),
     path('administradores/', lista_administradores, name='administradores'),
+    path('lista_usuarios_empresa/<int:empresa_id>/', lista_usuarios_empresa, name='lista_usuarios_empresa'),
+    path('lista_administradores_empresa/<int:empresa_id>/', lista_administradores_empresa, name='lista_administradores_empresa'),
     path('register_user_vista_admin/<int:empresa_id>/', register_user_vista_admin, name='Register_user_vista_admin'),
     
     # TRANSACCIONES

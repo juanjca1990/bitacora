@@ -77,8 +77,11 @@
                                     <li><a href="{% url 'RegisterOption' %}">Registrar Usuario</a></li>
                                     <li><a href="{% url 'EditarPerfil' %}">Editar Perfil ({{ user.username }})</a></li>
                                 {% endif %}
-                                <li><a href="{% url 'usuarios' %}">Lista Usuarios</a></li>
-                                <li><a href="{% url 'administradores' %}">Lista Administradores</a></li>
+                                {% if user.is_superuser %}
+                                    <li><a href="{% url 'usuarios' %}">Lista Usuarios</a></li>
+                                {% endif %}
+                                <li><a href="{% url 'lista_usuarios_empresa' user.empresa.id %}">Lista Usuarios</a></li>
+                                <li><a href="{% url 'lista_administradores_empresa' user.empresa.id %}">Lista Administradores</a></li>
                             </ul>
                         </li>
                         {% if request.session.admin %}
@@ -158,8 +161,11 @@
                                     <a class="dropdown-item" href="{% url 'RegisterOption' %}">Registrar Usuario</a>
                                     <a class="dropdown-item" href="{% url 'EditarPerfil' %}">Editar Perfil ({{ user.username }})</a>
                                 {% endif %}
-                                <a class="dropdown-item" href="{% url 'usuarios' %}">Lista Usuarios</a>
-                                <a class="dropdown-item" href="{% url 'administradores' %}">Lista Administradores</a>
+                                {% if user.is_superuser %}
+                                    <a class="dropdown-item" href="{% url 'usuarios' %}">Lista Usuarios</a>
+                                {% endif %}
+                                <a class="dropdown-item" href="{% url 'lista_usuarios_empresa' user.empresa.id %}">Lista Usuarios</a>
+                                <a class="dropdown-item" href="{% url 'lista_administradores_empresa' user.empresa.id %}">Lista Administradores</a>
                             </div>
                         </li>
                         {% if request.session.admin %}
