@@ -9,11 +9,11 @@
     <!-- Buscador -->
     <form method="get" class="mb-3 d-flex">
         <input type="text" name="q" class="form-control me-2" placeholder="Buscar por nombre o descripción" value="{{ query|default:'' }}">
-        <button type="submit" class="btn btn-primary">Buscar</button>
+        <button type="submit" class="btn btn-corporativo">Buscar</button>
     </form>
     {% if user.is_superuser or user.is_staff %}
     <div class="text-end mb-3">
-        <a href="{% url 'RegistroForm' %}" class="btn btn-primary">Dar de Alta Transaccion</a>
+        <a href="{% url 'RegistroForm' %}" class="btn btn-corporativo">Dar de Alta Transaccion</a>
     </div>
     {% endif %}
     

@@ -182,9 +182,17 @@ class UserEditForm(UserCreationForm):
         help_texts = {k: "" for k in fields}
 
 class EmailForm(forms.Form):
-    
-    asunto = forms.CharField(label="Asunto", widget=forms.TextInput(attrs={'class': 'form-control'}))
-    mensaje = forms.CharField(label="Mensaje", widget=forms.Textarea(attrs={'class': 'form-control'}))
+    asunto = forms.CharField(
+        label="Asunto", 
+        max_length=255,
+        required=True,
+        widget=forms.TextInput(attrs={'class': 'form-control'})
+    )
+    mensaje = forms.CharField(
+        label="Mensaje", 
+        required=True,
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5})
+    )
     
     
     

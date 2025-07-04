@@ -44,7 +44,7 @@ def contactoForm(request):
         print("-------------------------------")
         print(formulario)
         print("-------------------------------")
-        if formulario.is_valid:
+        if formulario.is_valid():
             info = formulario.cleaned_data
             contacto = Contacto(**info)
             contacto.save()

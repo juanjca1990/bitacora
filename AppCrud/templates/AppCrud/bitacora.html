@@ -42,7 +42,7 @@
               </div>
               <div class="col-md-4 mt-3">
                 <div class="">
-                  <button class="btn btn-primary ml-auto" type="submit">Filtrar</button>
+                  <button class="btn btn-corporativo ml-auto" type="submit">Filtrar</button>
                 </div>
               </div>
             </div>
@@ -130,7 +130,7 @@
 
 
 <!-- Modal -->
-<div class="modal fade" id="miModal" tabindex="-1" role="dialog" aria-labelledby="miModalLabel" aria-hidden="true">
+<div class="modal fade" id="miModal" tabindex="-1" role="dialog" aria-labelledby="miModalLabel" aria-hidden="true" style="z-index: 9999;">
   <div class="modal-dialog" style="max-width: 800px; width: 100%;" role="document">
       <div class="modal-content">
           <div class="modal-header">
@@ -142,18 +142,114 @@
           <div class="modal-body">
               <!-- Formulario de Django precargado -->
               <h4>El siguiente mail será enviado a: {{ nombres  }}</h4>
-              si desea cambiar el/los destinatarios se deberán configurar desde los avisos
+              <p>Si desea cambiar el/los destinatarios se deberán configurar desde los avisos</p>
+              
+              {% if form.errors %}
+                  <div class="alert alert-danger">
+                      <strong>Errores en el formulario:</strong>
+                      {% for field, errors in form.errors.items %}
+                          <br>{{ field }}: {{ errors|join:", " }}
+                      {% endfor %}
+                  </div>
+              {% endif %}
               
               {% firstof job.id 1 as job_id %}
-              <form method="POST" action="{% url 'avisar' job_id %}">
+              <form method="POST" action="{% url 'avisar' job_id %}" id="emailForm">
                   {% csrf_token %}
                   {{ form.as_p }}
-                  <button type="submit" class="btn btn-primary me-0">Enviar</button>
+                  <div class="form-group">
+                      <button type="submit" class="btn btn-primary">Enviar Email</button>
+                      <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancelar</button>
+                  </div>
               </form>
           </div>
       </div>
   </div>
 </div>
+
+<script>
+// Script para manejar el modal
+$(document).ready(function() {
+    console.log('Script cargado');
+    
+    // Verificar si el modal existe
+    if ($('#miModal').length) {
+        console.log('Modal encontrado');
+        
+        // Mostrar el modal si hay un formulario de email (cuando viene de la vista avisar)
+        {% if form %}
+        console.log('Formulario encontrado, mostrando modal');
+        
+        // Forzar el modal a mostrarse correctamente
+        $('#miModal').modal({
+            backdrop: true,
+            keyboard: true,
+            focus: true,
+            show: true
+        });
+        
+        // Asegurar que el modal esté por encima de todo
+        $('#miModal').css({
+            'z-index': '9999',
+            'pointer-events': 'auto'
+        });
+        
+        // Asegurar que el backdrop permita interacción
+        $('.modal-backdrop').css({
+            'z-index': '9998',
+            'pointer-events': 'auto'
+        });
+        
+        {% endif %}
+        
+        // Manejar el envío del formulario
+        $('#emailForm').on('submit', function(e) {
+            console.log('Formulario enviado');
+            console.log('Datos del formulario:', $(this).serialize());
+            
+            // Mostrar indicador de carga
+            var submitBtn = $(this).find('button[type="submit"]');
+            submitBtn.prop('disabled', true).text('Enviando...');
+            
+            // Permitir el envío normal del formulario
+            return true;
+        });
+        
+        // Eventos del modal
+        $('#miModal').on('shown.bs.modal', function () {
+            console.log('Modal mostrado');
+            // Asegurar que el modal esté por encima
+            $(this).css({
+                'z-index': '9999',
+                'pointer-events': 'auto'
+            });
+            $('.modal-backdrop').css({
+                'z-index': '9998',
+                'pointer-events': 'auto'
+            });
+        });
+        
+        $('#miModal').on('hidden.bs.modal', function () {
+            console.log('Modal ocultado');
+            // Redirigir a bitácora después de cerrar
+            window.location.href = "{% url 'bitacora' %}";
+        });
+        
+        // Manejar el botón de cerrar
+        $('.close, .btn-secondary').on('click', function() {
+            $('#miModal').modal('hide');
+        });
+        
+        // Prevenir que el backdrop cierre el modal cuando se hace clic en el contenido
+        $('#miModal').on('click', function(e) {
+            if (e.target === this) {
+                // Solo cerrar si se hace clic en el backdrop, no en el contenido
+                return;
+            }
+        });
+    }
+});
+</script>
 
 
         {% if admin_perm %}
@@ -170,6 +266,24 @@
         label,span,h1,h2,h3,h4,h5,h6 {
             color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
         }
+        
+        /* Estilos para el modal */
+        .modal {
+            z-index: 1050 !important;
+        }
+        
+        .modal-backdrop {
+            z-index: 1040 !important;
+        }
+        
+        .modal-dialog {
+            z-index: 1060 !important;
+        }
+        
+        .modal-content {
+            z-index: 1070 !important;
+        }
+        
         /* Estilos corporativos para tablas */
         .table-corporativa thead th {
             background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;

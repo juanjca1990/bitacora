@@ -210,3 +210,43 @@ thead th {
         align-items: center;
     }
 }
+
+/* Modal de envío de email */
+#miModal.modal {
+    z-index: 9999 !important;
+}
+
+#miModal .modal-backdrop {
+    z-index: 9998 !important;
+}
+
+#miModal .modal-dialog {
+    z-index: 10000 !important;
+}
+
+#miModal .modal-content {
+    z-index: 10001 !important;
+    pointer-events: auto !important;
+}
+
+#miModal .modal-header,
+#miModal .modal-body,
+#miModal .modal-footer {
+    pointer-events: auto !important;
+}
+
+#miModal button,
+#miModal input,
+#miModal textarea,
+#miModal select {
+    pointer-events: auto !important;
+}
+
+/* Asegurar que el modal sea clickeable */
+.modal.show {
+    pointer-events: auto !important;
+}
+
+.modal-backdrop.show {
+    pointer-events: auto !important;
+}

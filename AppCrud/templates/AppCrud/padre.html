@@ -289,14 +289,6 @@
     </style>
 </html>
 
-{% if request.method == 'GET' and request.resolver_match.view_name == 'avisar' %}
-<script>
-  $(document).ready(function() {
-    $('#miModal').modal('show');
-  });
-</script>
-{% endif %}
-
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     var btn = document.getElementById('menuDropdownBtn');

@@ -7,7 +7,7 @@
     <h1 class="text-center">Lista de Servidores</h1>
     {% if user.is_superuser or user.is_staff %}
         <div class="text-end mb-3">
-            <a href="{% url 'ServidorForm' %}" class="btn btn-primary">Dar de Alta Servidor</a>
+            <a href="{% url 'ServidorForm' %}" class="btn btn-corporativo">Dar de Alta Servidor</a>
         </div>
     {% endif %}
     <table class="table table-bordered table-striped table-corporativa mt-3">

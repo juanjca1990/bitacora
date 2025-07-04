@@ -60,7 +60,7 @@ def jobForm(request):
         print("-------------------------------")
         print(formulario)
         print("-------------------------------")
-        if formulario.is_valid:
+        if formulario.is_valid():
             info = formulario.cleaned_data
             print(info)
             job = Job(**info)
@@ -133,66 +133,4 @@ def get_job_description(request):
             return JsonResponse({'descripcion': ''})
     return JsonResponse({'descripcion': ''})
 
-def obtener_mails_y_nombres(job):
-    emails = []
-    nombres = []
-    # obtener los avisos que tenga asignado ese job
-    avisos = Aviso.objects.filter(job=job)
-    # por cada aviso, obtener los contactos que tenga asignado ese aviso
-    for aviso in avisos:
-        contactos = Contacto.objects.filter(aviso=aviso)
-        # por cada contacto, obtener el email y guardarlo en la lista
-        for contacto in contactos:
-            emails.append(contacto.mail)
-            nombres.append(contacto.nombre)
-    return(emails, nombres)
 
-def avisar(request, id):
-    job = Job.objects.get(id=id)
-    emails, nombres = obtener_mails_y_nombres(job)
-    if len(emails) == 0:
-        # generate alert in template
-        mensaje = f"No hay contactos asignados al trabajo {job.nombre}"
-        messages.info(request, mensaje)
-        return redirect('bitacora')
-
-    if request.method == 'POST':
-        form = EmailForm(request.POST)
-        if form.is_valid():
-            # enviar mail a cada email de la lista con el aviso
-            subject = form.cleaned_data.get("asunto")
-            message = form.cleaned_data.get("mensaje")
-            from_email = "avisos@exerom.com"
-
-            send_mail(subject, message, 'avisos@exerom.com', emails)
-            # Redirige a la página de inicio with un mensaje de éxito
-            messages.success(request, 'Los correos electrónicos han sido enviados.')
-            
-            return redirect('bitacora')
-
-    else:
-        print("Hola, soy el job id: ", id)
-        
-        # asunto en el form es el nombre del job, anteponiendo "JOB: "
-        form = EmailForm(initial={'asunto': f"JOB: {job.nombre}"})
-        
-        # Importar la función desde bitacora_views
-        from .bitacora_views import obtener_bitacoras_paginadas
-        paginated_bitacoras, empresas = obtener_bitacoras_paginadas(request)
-        
-        # create string with nombres separated by commas
-        nombres_string = ""
-        for nombre in nombres:
-            nombres_string += nombre + ", "
-        # remove last comma
-        nombres_string = nombres_string[:-2]
-
-        usuario = request.user
-        return render(request, "AppCrud/bitacora.html", {
-            "paginated_bitacoras": paginated_bitacoras, 
-            "admin_perm": usuario.has_perm('AppCrud.empresa_admin'), 
-            "empresas": empresas, 
-            'job': job, 
-            'form': form, 
-            "nombres": nombres_string
-        })

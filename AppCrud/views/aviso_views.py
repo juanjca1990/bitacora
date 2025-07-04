@@ -23,7 +23,7 @@ def avisoForm(request):
         print("-------------------------------")
         print(formulario)
         print("-------------------------------")
-        if formulario.is_valid:
+        if formulario.is_valid():
             info = formulario.cleaned_data
             aviso = Aviso(**info)
             aviso.save()
@@ -119,11 +119,32 @@ def avisar(request, id):
             message = form.cleaned_data.get("mensaje")
             from_email = "avisos@exerom.com"
 
-            send_mail(subject, message, 'avisos@exerom.com', emails)
-            # Redirige a la página de inicio with un mensaje de éxito
-            messages.success(request, 'Los correos electrónicos han sido enviados.')
+            try:
+                send_mail(subject, message, 'avisos@exerom.com', emails)
+                # Redirige a la página de inicio with un mensaje de éxito
+                messages.success(request, 'Los correos electrónicos han sido enviados.')
+                return redirect('bitacora')
+            except Exception as e:
+                messages.error(request, f'Error al enviar el correo: {str(e)}')
+        else:
+            messages.error(request, 'Por favor, corrija los errores en el formulario.')
             
-            return redirect('bitacora')
+        # Si hay errores, mostrar el modal nuevamente
+        paginated_bitacoras, empresas = obtener_bitacoras_paginadas(request)
+        nombres_string = ""
+        for nombre in nombres:
+            nombres_string += nombre + ", "
+        nombres_string = nombres_string[:-2]
+
+        usuario = request.user
+        return render(request, "AppCrud/bitacora.html", {
+            "paginated_bitacoras": paginated_bitacoras, 
+            "admin_perm": usuario.has_perm('AppCrud.empresa_admin'), 
+            "empresas": empresas, 
+            'job': job, 
+            'form': form, 
+            "nombres": nombres_string
+        })
 
     else:
         print("Hola, soy el job id: ", id)
