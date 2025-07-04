@@ -7,7 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" rel="nofollow" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     <link rel="stylesheet" href="{% static 'admin/css/style.css' %}">
-    <link rel="stylesheet" href="{% static 'AppCrud/css/estilos-corporativos.css' %}">
+    <link rel="stylesheet" href="{% static 'admin/css/estilos-corporativos.css' %}">
     <title>{% block title %}
         {% endblock %}</title>
     
@@ -57,8 +57,7 @@
                                 {% endif %}
                                 {% if user.is_superuser %}
                                     <li><a href="{% url 'empresa' %}">Empresas</a></li>
-                                {% endif %}
-                                {% if user.is_staff %}
+                                {% elif user.is_staff %}
                                     <li><a class="dropdown-item" href="{% url 'empresa_otros' %}">Empresas</a></li>
                                 {% endif %}
                             </ul>
@@ -79,6 +78,7 @@
                                 {% endif %}
                                 {% if user.is_superuser %}
                                     <li><a href="{% url 'usuarios' %}">Lista Usuarios</a></li>
+                                    <li><a href="{% url 'administradores' %}">Lista Administradores</a></li>
                                 {% endif %}
                                 {% if not user.is_superuser %}
                                     <li><a href="{% url 'lista_usuarios_empresa' user.empresa.id %}">Lista Usuarios</a></li>
@@ -137,8 +137,7 @@
                                 {% endif %}
                                 {% if user.is_superuser %}
                                     <a class="dropdown-item" href="{% url 'empresa' %}">Empresas</a>
-                                {% endif %}
-                                {% if user.is_staff %}
+                                {% elif user.is_staff %}
                                     <a class="dropdown-item" href="{% url 'empresa_otros' %}">Empresas</a>
                                 {% endif %}
                             </div>
@@ -165,6 +164,7 @@
                                 {% endif %}
                                 {% if user.is_superuser %}
                                     <a class="dropdown-item" href="{% url 'usuarios' %}">Lista Usuarios</a>
+                                    <a class="dropdown-item" href="{% url 'administradores' %}">Lista Administradores</a>
                                 {% endif %}
                                 {% if not user.is_superuser %}
                                     <a class="dropdown-item" href="{% url 'lista_usuarios_empresa' user.empresa.id %}">Lista Usuarios</a>
