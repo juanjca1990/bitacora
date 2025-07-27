@@ -22,4 +22,6 @@ from AppCrud.views import inicio
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', inicio),
-    path("AppCrud/", include("AppCrud.urls"))] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
+    path("AppCrud/", include("AppCrud.urls")),
+    path("chat/", include("chat.urls")),  # Solo esta línea para chat
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)  + static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)

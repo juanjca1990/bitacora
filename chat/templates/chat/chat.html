@@ -1,0 +1,220 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Exerom Assistant</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: '72', 'Segoe UI', Arial, sans-serif;
+            background: var(--background, #f4f6fa);
+            color: var(--text, #222);
+            min-height: 100vh;
+            height: 100vh;
+            width: 100vw;
+            box-sizing: border-box;
+        }
+        #chat-box {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            width: 100vw;
+            height: 100vh;
+            margin: 0;
+            background: var(--surface, #fff);
+            border-radius: 0;
+            box-shadow: none;
+            padding: 0;
+            border: none;
+            display: flex;
+            flex-direction: column;
+        }
+        #header {
+            background: linear-gradient(90deg, var(--sap-blue, #0a3d5e) 60%, var(--sap-green, #00838f) 100%);
+            padding: 24px 0 16px 0;
+            text-align: center;
+            color: #fff;
+            box-shadow: 0 2px 8px #0002;
+        }
+        #logo {
+            display: block;
+            margin: 0 auto 8px auto;
+            max-width: 140px;
+            filter: drop-shadow(0 2px 8px #0002);
+        }
+        h2 {
+            margin: 0 0 4px 0;
+            font-size: 1.7rem;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+        #messages {
+            flex: 1;
+            min-height: 0;
+            max-height: none;
+            overflow-y: auto;
+            margin: 0;
+            padding: 16px 0;
+            background: var(--sap-gray, #f2f2f2);
+        }
+        .msg {
+            margin: 12px 32px;
+            padding: 12px 18px;
+            border-radius: 12px;
+            max-width: 80%;
+            word-break: break-word;
+            animation: msgIn 0.4s;
+        }
+        @keyframes msgIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: none; }
+        }
+        .user {
+            background: linear-gradient(90deg, var(--user-bg, #e0f7fa), #b3e5fc);
+            color: var(--sap-blue, #0a3d5e);
+            margin-left: auto;
+            text-align: right;
+            box-shadow: 0 2px 8px #1976d211;
+            border: 1px solid var(--sap-blue, #0a3d5e);
+        }
+        .bot {
+            background: linear-gradient(90deg, var(--bot-bg, #e3f2fd), #fffde7);
+            color: var(--sap-green, #00838f);
+            margin-right: auto;
+            text-align: left;
+            box-shadow: 0 2px 8px #00838f11;
+            border: 1px solid var(--sap-green, #00838f);
+        }
+        .msg span.user, .msg span.bot {
+            font-weight: bold;
+            color: inherit;
+            background: none;
+            border: none;
+            padding: 0;
+            margin-right: 6px;
+            box-shadow: none;
+            display: inline;
+        }
+        #input-area {
+            display: flex;
+            gap: 8px;
+            margin: 0;
+            padding: 16px 32px;
+            background: var(--surface, #fff);
+            border-top: 1.5px solid var(--border, #d1d8e0);
+        }
+        #message-input {
+            flex: 1;
+            padding: 14px;
+            border-radius: 8px;
+            border: 1.5px solid var(--border, #d1d8e0);
+            background: #fff;
+            color: var(--text, #222);
+            font-size: 1rem;
+            outline: none;
+            resize: vertical;
+            min-height: 48px;
+            max-height: 180px;
+            transition: box-shadow 0.2s, border 0.2s;
+        }
+        #message-input:focus {
+            box-shadow: 0 0 0 2px var(--accent, #ffd600);
+            border: 1.5px solid var(--accent, #ffd600);
+        }
+        #send-btn {
+            padding: 14px 28px;
+            border: none;
+            background: linear-gradient(90deg, var(--sap-green, #00838f), var(--sap-blue, #0a3d5e));
+            color: #fff;
+            border-radius: 8px;
+            font-weight: bold;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s, transform 0.1s;
+            box-shadow: 0 2px 8px #00838f22;
+        }
+        #send-btn:active {
+            transform: scale(0.97);
+        }
+        #send-btn:disabled {
+            background: #aaa;
+            cursor: not-allowed;
+        }
+        @media (max-width: 700px) {
+            #chat-box { padding: 0; }
+            #input-area { padding: 12px 8px; }
+            .msg { margin: 12px 8px; }
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-box">
+        <div id="header">
+            <img id="logo" src="{% static 'chat/logoexerom.png' %}" alt="Logo empresa" />
+            <h2>Chat Exerom Assistant</h2>
+            <div style="font-size:1rem;opacity:.85;">www.exerom.com</div>
+        </div>
+        <div id="messages"></div>
+        <div id="input-area">
+            <textarea id="message-input" placeholder="Escribe tu mensaje... (Shift+Enter para nueva línea)" autofocus></textarea>
+            <button id="send-btn">Enviar</button>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const input = document.getElementById('message-input');
+        const sendBtn = document.getElementById('send-btn');
+
+        function appendMessage(text, sender, isHtml = false) {
+            const div = document.createElement('div');
+            div.className = 'msg ' + sender;
+            if (sender === 'user') {
+                div.innerHTML = `<span class="user">User:</span> ${text}`;
+            } else {
+                div.innerHTML = `<span class="bot">Exerom Assistant:</span> ` + (isHtml ? text : text);
+            }
+            messagesDiv.appendChild(div);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        sendBtn.onclick = async function() {
+            const msg = input.value.trim();
+            if (!msg) return;
+            appendMessage(msg.replace(/\n/g, "<br>"), 'user', true);
+            input.value = '';
+            sendBtn.disabled = true;
+            try {
+                const res = await fetch('/chat/api/message/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: msg, provider: 'gemini' })
+                });
+                const data = await res.json();
+                if (data.response) {
+                    // Convierte Markdown a HTML
+                    const formatted = marked.parse(data.response);
+                    appendMessage(formatted, 'bot', true);
+                } else {
+                    appendMessage('Error: ' + (data.error || 'Sin respuesta'), 'bot');
+                }
+            } catch (e) {
+                appendMessage('Error de red', 'bot');
+            }
+            sendBtn.disabled = false;
+        };
+
+        input.addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                sendBtn.onclick();
+            }
+        });
+    </script>
+</body>
+</html>
