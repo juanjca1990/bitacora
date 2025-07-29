@@ -3,5 +3,5 @@ from chat.views import *
 
 urlpatterns = [
     path('', chat_view, name='chat'),
-    path('api/message/', send_message, name='send_message'),  # <-- así queda bien
+    path('api/message/', send_message, name='send_message'),
 ]
