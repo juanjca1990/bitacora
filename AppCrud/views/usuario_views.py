@@ -259,23 +259,27 @@ def login_request(request):
         return render(request, "AppCrud/login.html", {"form": form})
 
 @login_required
-def cambiar_usuario(request):
-    User = get_user_model()
+def cambiar_empresa(request):
     if request.method == "POST":
-        print("Cambiando usuario. es un post..")
-        user_id = request.POST.get("user_id")
-        print("el usuario es : ", user_id)
+        print("Cambiando empresa. es un post..")
+        empresa_id = request.POST.get("empresa_id")
+        print("la empresa es : ", empresa_id)
         try:
-            nuevo_usuario = User.objects.get(id=user_id)
-            login(request, nuevo_usuario)
-            request.session['admin'] = True
-        except User.DoesNotExist:
+            nueva_empresa = Empresa.objects.get(id=empresa_id)
+            # Verificar que el usuario tenga acceso a esta empresa
+            if request.user.tiene_acceso_empresa(nueva_empresa):
+                request.session['empresa_actual'] = nueva_empresa.id
+                request.session['admin'] = True
+                print(f"Empresa cambiada a: {nueva_empresa.nombre}")
+            else:
+                print("Usuario no tiene acceso a esta empresa")
+        except Empresa.DoesNotExist:
+            print("Empresa no existe")
             pass
         # Redirige SIEMPRE después del POST
         return redirect('inicio')
     # Si GET, muestra la página normalmente
     print("fue un GET")
-    # request.session['admin'] = True
     # return redirect('inicio')
 
 @login_required
