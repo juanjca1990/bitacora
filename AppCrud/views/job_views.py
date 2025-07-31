@@ -2,10 +2,25 @@ from .base_imports import *
 
 
 def filtrar_empresas(request, empresas):
+    """Filtra las empresas según los parámetros de búsqueda y permisos del usuario"""
     query = Q()
     emp = request.GET.get('emp')
     if emp:
         query &= Q(nombre__icontains=emp)
+    
+    # Filtrar empresas según permisos del usuario
+    usuario = request.user
+    if not usuario.is_superuser:
+        # Si el usuario no es superuser, solo mostrar empresas que puede administrar o su empresa asignada
+        empresas_permitidas = Q()
+        if usuario.empresa:
+            empresas_permitidas |= Q(id=usuario.empresa.id)
+        if hasattr(usuario, 'empresas_administradas'):
+            empresas_administradas_ids = usuario.empresas_administradas.values_list('id', flat=True)
+            if empresas_administradas_ids:
+                empresas_permitidas |= Q(id__in=empresas_administradas_ids)
+        query &= empresas_permitidas
+    
     return empresas.filter(query)
 
 

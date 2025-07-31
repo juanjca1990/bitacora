@@ -15,7 +15,8 @@
             <tr>
                 <th>Usuario</th>
                 <th>Email</th>
-                <th>Empresa</th> <!-- Nueva columna -->
+                <th>Empresas Administradas</th>
+                <th>Acciones</th>
             </tr>
         </thead>
         <tbody>
@@ -24,11 +25,23 @@
                 <td>{{ admin.username }}</td>
                 <td>{{ admin.email }}</td>
                 <td>
-                    {% if admin.empresa %}
-                        {{ admin.empresa.nombre }}
-                    {% else %}
-                        Sin empresa
-                    {% endif %}
+                    {% for empresa in admin.empresas_administradas.all %}
+                        <p></p>
+                        <span>{{ empresa.nombre }}</span>
+                        <p></p>
+                    {% empty %}
+                        <span class="text-muted">Ninguna empresa asignada</span>
+                    {% endfor %}
+                </td>
+                  <td>
+                    <div class="btn-group" role="group">
+                        <a href="{% url 'editarAdminMultiEmpresa' admin.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                            <i class="fas fa-edit">editar</i>
+                        </a>
+                        <a href="{% url 'detallesAdminMultiEmpresa' admin.id %}" class="btn btn-sm btn-outline-info" title="Ver detalles">
+                            <i class="fas fa-eye">detalles</i>
+                        </a>
+                    </div>
                 </td>
             </tr>
             {% endfor %}

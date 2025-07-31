@@ -1,0 +1,110 @@
+{% extends "AppCrud/padre.html" %}
+{% load custom_filters %}
+{% block title %}Administradores{% endblock %}
+{% block bloque %}
+<div class="container mt-5">
+    <h1 class="text-center">Lista de Administradores</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{% url 'RegisterAdmin' %}" class="btn btn-primary">
+            <i class="fas fa-user-plus"></i> Nuevo Administrador
+        </a>
+    </div>
+
+    <!-- Buscador -->
+    <form method="get" class="mb-3 d-flex">
+        <input type="text" name="q_admins" class="form-control me-2" placeholder="Buscar por nombre o email" value="{{ request.GET.q_admins|default:'' }}">
+        <button type="submit" class="btn btn-corporativo">Buscar</button>
+    </form>
+
+    {% if administradores %}
+        <div class="table-responsive">
+            <table class="table table-bordered table-striped table-corporativa mt-3">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Usuarios</th>
+                        <th>Email</th>
+                        <th>Empresas Administradas</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for admin in administradores %}
+                    <tr>
+                        <td>
+                            {{ admin.username }}
+                        </td>
+                        <td>{{ admin.email }}</td>
+                        <td>
+                            {% for empresa in admin.empresas_administradas.all %}
+                                <p></p>
+                                <span>{{ empresa.nombre }}</span>
+                                <p></p>
+                            {% empty %}
+                                <span class="text-muted">Ninguna</span>
+                            {% endfor %}
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <a href="{% url 'editarAdminMultiEmpresa' admin.id %}" class="btn btn-sm btn-outline-primary" title="Editar">
+                                    <i class="fas fa-edit">Editar</i>
+                                </a>
+                                <a href="{% url 'detallesAdminMultiEmpresa' admin.id %}" class="btn btn-sm btn-outline-info" title="Ver detalles">
+                                    <i class="fas fa-eye">Detalles</i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Paginación -->
+        <nav>
+            <ul class="pagination justify-content-center">
+                {% if administradores.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q_admins={{ request.GET.q_admins }}&admin_page=1">&laquo; Primera</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?q_admins={{ request.GET.q_admins }}&admin_page={{ administradores.previous_page_number }}">&lsaquo; Anterior</a>
+                    </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">{{ administradores.number }} de {{ administradores.paginator.num_pages }}</span>
+                </li>
+                
+                {% if administradores.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q_admins={{ request.GET.q_admins }}&admin_page={{ administradores.next_page_number }}">Siguiente &rsaquo;</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?q_admins={{ request.GET.q_admins }}&admin_page={{ administradores.paginator.num_pages }}">Última &raquo;</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% else %}
+        <div class="alert alert-info text-center">
+            <h4>No hay administradores multi-empresa registrados</h4>
+            <p>Puedes crear uno nuevo haciendo clic en el botón "Nuevo Administrador".</p>
+        </div>
+    {% endif %}
+</div>
+
+<style>
+    .badge {
+        font-size: 0.75em;
+    }
+    
+    .btn-group .btn {
+        border-radius: 0.25rem;
+        margin-right: 0.25rem;
+    }
+    
+    .table-corporativa tbody tr:hover {
+        background-color: #f8f9fa;
+    }
+</style>
+{% endblock %}

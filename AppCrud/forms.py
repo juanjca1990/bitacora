@@ -216,14 +216,22 @@ class ServidorForm(forms.ModelForm):
 
 class AsignarAdminForm(forms.Form):
     usuario = forms.ModelChoiceField(
-        queryset=User.objects.all(),
+        queryset=User.objects.filter(is_superuser=False, empresas_administradas__isnull=True),  # Excluir superusuarios y usuarios que ya son admin de empresas
         label="Usuario",
-        widget=forms.Select(attrs={'class': 'form-control select2'})  # Puedes usar select2 para mejor búsqueda
+        widget=forms.Select(attrs={'class': 'form-control select2'}),
+        help_text="Selecciona el usuario que se convertirá en administrador"
     )
-    empresa = forms.ModelChoiceField(
+    empresas = forms.ModelMultipleChoiceField(
         queryset=Empresa.objects.all(),
-        label="Empresa",
-        widget=forms.Select(attrs={'class': 'form-control'})
+        label="Empresas",
+        widget=forms.CheckboxSelectMultiple(),
+        help_text="Selecciona las empresas que administrará este usuario"
     )
+
+    def clean_empresas(self):
+        empresas = self.cleaned_data.get('empresas')
+        if not empresas:
+            raise forms.ValidationError("Debe seleccionar al menos una empresa.")
+        return empresas
 
 

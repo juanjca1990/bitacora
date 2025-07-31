@@ -377,8 +377,8 @@ def monitoreo(request, hoy):
     registros_por_servidor = dict(sorted(registros_por_servidor.items(), key=lambda x: x[0].nombre))
 
     # Verifica si la edición está bloqueada o si el usuario no tiene permisos
-    # Los usuarios que no son superuser ni staff no pueden modificar estados
-    usuario_puede_editar = usuario.is_superuser or usuario.is_staff
+    # Los usuarios que no son superuser ni administradores de empresa no pueden modificar estados
+    usuario_puede_editar = usuario.is_superuser or usuario.es_admin_empresa(empresa)
     
     if request.session.get("bloquear_edicion", False) or not usuario_puede_editar:
         hoy_real = now().date()
@@ -421,8 +421,6 @@ def registrarEstado(request):
         try:
             # Verificar si el usuario tiene permisos para editar
             usuario = request.user
-            if not (usuario.is_superuser or usuario.is_staff):
-                return JsonResponse({"success": False, "error": "No tiene permisos para modificar estados"})
             
             print("Estoy en el try de registrarEstado")
             data = json.loads(request.body)
@@ -441,6 +439,10 @@ def registrarEstado(request):
             servidor = Servidor.objects.get(id=servidor_id)
             empresa = Empresa.objects.get(id=empresa_id)
             fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
+            
+            # Verificar permisos específicos para esta empresa
+            if not (usuario.is_superuser or usuario.es_admin_empresa(empresa)):
+                return JsonResponse({"success": False, "error": "No tiene permisos para modificar estados de esta empresa"})
 
             # Buscar o crear estado
             estado, created = Estado.objects.get_or_create(
@@ -473,8 +475,6 @@ def registrarDescripcion(request):
         try:
             # Verificar si el usuario tiene permisos para editar
             usuario = request.user
-            if not (usuario.is_superuser or usuario.is_staff):
-                return JsonResponse({"success": False, "error": "No tiene permisos para modificar descripciones"})
             
             data = json.loads(request.body)
             registro_id = data.get("registro_id")
@@ -488,6 +488,10 @@ def registrarDescripcion(request):
             servidor = Servidor.objects.get(id=servidor_id)
             empresa = Empresa.objects.get(id=empresa_id)
             fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
+            
+            # Verificar permisos específicos para esta empresa
+            if not (usuario.is_superuser or usuario.es_admin_empresa(empresa)):
+                return JsonResponse({"success": False, "error": "No tiene permisos para modificar descripciones de esta empresa"})
 
             # Buscar o crear estado
             estado, created = Estado.objects.get_or_create(

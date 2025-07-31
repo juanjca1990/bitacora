@@ -10,3 +10,4 @@ six==1.17.0
 sqlparse==0.4.4
 typing_extensions==4.6.2
 tzdata==2023.3
+reportlab==4.4.1
