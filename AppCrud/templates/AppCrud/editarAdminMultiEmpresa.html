@@ -1,0 +1,72 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Editar Administrador Multi-Empresa{% endblock %}
+{% block bloque %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="text-center mb-4">Editar Empresas de {{ admin_usuario.username }}</h2>
+            
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0">Información del Usuario</h5>
+                </div>
+                <div class="card-body">
+                    <p><strong>Usuario:</strong> {{ admin_usuario.username }}</p>
+                    <p><strong>Email:</strong> {{ admin_usuario.email }}</p>
+                </div>
+            </div>
+            
+            <form method="POST"> 
+                {% csrf_token %}
+                {{ form.usuario.as_hidden }}
+                
+                <div class="mb-3">
+                    <label class="form-label">Empresas a Administrar:</label>
+                    <div class="form-text mb-2">{{ form.empresas.help_text }}</div>
+                    <div class="row">
+                        {% for choice in form.empresas %}
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.empresas.errors %}
+                        <div class="text-danger">{{ form.empresas.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'listaAdministradoresMultiEmpresa' %}" class="btn btn-secondary me-md-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Actualizar Empresas</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-check {
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background-color: #f8f9fa;
+    }
+    
+    .form-check:hover {
+        background-color: #e9ecef;
+    }
+    
+    .form-check-input:checked + .form-check-label {
+        font-weight: bold;
+    }
+    
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    }
+</style>
+{% endblock %}

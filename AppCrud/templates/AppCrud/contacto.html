@@ -1,5 +1,6 @@
 {% extends "AppCrud/padre.html" %}
-{% block title %}Contactos{% endblock %}
+{% load custom_filters %}
+{% block title %}Contacto{% endblock %} extends "AppCrud/padre.html" %}
 {% block bloque %}
     <div class="container">
         <form method="GET" action="{% url 'contacto' %}">
@@ -38,7 +39,7 @@
 
         <h1 class="mt-5">CONTACTOS</h1>
         {% for empresa, contactos in contactos_by_empresa.items %}
-            {% if user.empresa == empresa or user.is_superuser %}
+            {% if user|tiene_acceso_empresa:empresa %}
                 <h2>{{ empresa }}</h2>
                 <div class="table-responsive mt-3">
                     <table class="table table-corporativa">

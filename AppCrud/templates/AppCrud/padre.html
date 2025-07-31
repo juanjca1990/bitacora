@@ -78,11 +78,11 @@
                                 {% endif %}
                                 {% if user.is_superuser %}
                                     <li><a href="{% url 'usuarios' %}">Lista Usuarios</a></li>
-                                    <li><a href="{% url 'administradores' %}">Lista Administradores</a></li>
+                                    <li><a href="{% url 'listaAdministradoresMultiEmpresa' %}">Lista Administradores</a></li>
                                 {% endif %}
                                 {% if not user.is_superuser %}
-                                    <li><a href="{% url 'lista_usuarios_empresa' user.empresa.id %}">Lista Usuarios</a></li>
-                                    <li><a href="{% url 'lista_administradores_empresa' user.empresa.id %}">Lista Administradores</a></li>
+                                    <li><a href="{% url 'listaUsuariosEmpresa' user.empresa.id %}">Lista Usuarios</a></li>
+                                    <li><a href="{% url 'listaAdministradoresEmpresa' user.empresa.id %}">Lista Administradores</a></li>
                                 {% endif %}
                             </ul>
                         </li>
@@ -164,11 +164,11 @@
                                 {% endif %}
                                 {% if user.is_superuser %}
                                     <a class="dropdown-item" href="{% url 'usuarios' %}">Lista Usuarios</a>
-                                    <a class="dropdown-item" href="{% url 'administradores' %}">Lista Administradores</a>
+                                    <a class="dropdown-item" href="{% url 'listaAdministradoresMultiEmpresa' %}">Lista Administradores</a>
                                 {% endif %}
                                 {% if not user.is_superuser %}
-                                    <a class="dropdown-item" href="{% url 'lista_usuarios_empresa' user.empresa.id %}">Lista Usuarios</a>
-                                    <a class="dropdown-item" href="{% url 'lista_administradores_empresa' user.empresa.id %}">Lista Administradores</a>
+                                    <a class="dropdown-item" href="{% url 'listaUsuariosEmpresa' user.empresa.id %}">Lista Usuarios</a>
+                                    <a class="dropdown-item" href="{% url 'listaAdministradoresEmpresa' user.empresa.id %}">Lista Administradores</a>
                                 {% endif %}
                             </div>
                         </li>

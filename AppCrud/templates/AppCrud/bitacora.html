@@ -1,4 +1,5 @@
 {% extends "AppCrud/padre.html" %}
+{% load custom_filters %}
 {% block title %}Bitacora{% endblock %}
 {% block bloque %}
     <div class="container mt-5">
@@ -57,7 +58,7 @@
           </div>
           {% endfor %}
         {% for empresa, bitacoras in paginated_bitacoras.items %}
-        {% if user.empresa == empresa or user.is_superuser %}
+        {% if user|tiene_acceso_empresa:empresa %}
             <h2>{{ empresa }}</h2>
             <div class="table-responsive mt-3">
                 <table class="table table-bordered table-striped table-corporativa">

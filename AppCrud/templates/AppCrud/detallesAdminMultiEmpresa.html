@@ -1,0 +1,112 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Ver Administrador Multi-Empresa{% endblock %}
+{% block bloque %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-10">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Detalles del Administrador: {{ admin_usuario.username }}</h2>
+                <div>
+                    <a href="{% url 'editarAdminMultiEmpresa' admin_usuario.id %}" class="btn btn-primary">
+                        <i class="fas fa-edit"></i> Editar
+                    </a>
+                    <a href="{% url 'listaAdministradoresMultiEmpresa' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Volver
+                    </a>
+                </div>
+            </div>
+            
+            <div class="row">
+                <!-- Información del Usuario -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-user"></i> Información Personal</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless">
+                                <tr>
+                                    <td><strong>Usuario:</strong></td>
+                                    <td>{{ admin_usuario.username }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Email:</strong></td>
+                                    <td>{{ admin_usuario.email }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Fecha de registro:</strong></td>
+                                    <td>{{ admin_usuario.date_joined|date:"d/m/Y H:i" }}</td>
+                                </tr>
+                                <tr>
+                                    <td><strong>Último acceso:</strong></td>
+                                    <td>
+                                        {% if admin_usuario.last_login %}
+                                            {{ admin_usuario.last_login|date:"d/m/Y H:i" }}
+                                        {% else %}
+                                            Nunca
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <strong>Empresa asignada:</strong></td>
+                                    <td>{{ admin_usuario.empresa }}</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Empresas Administradas -->
+                <div class="col-md-6">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0"><i class="fas fa-building"></i> Empresas Administradas</h5>
+                        </div>
+                        <div class="card-body">
+                            {% if empresas_administradas %}
+                                <div class="list-group list-group-flush">
+                                    {% for empresa in empresas_administradas %}
+                                        <div class="list-group-item d-flex justify-content-between align-items-center">
+                                            <div>
+                                                <h6 class="mb-1">{{ empresa.nombre }}</h6>
+                                                <small class="text-muted">Administrador desde: 
+                                                    {% now "d/m/Y" %}
+                                                </small>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Este usuario no administra ninguna empresa actualmente.
+                                </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+        margin-bottom: 1rem;
+    }
+    
+    .badge {
+        font-size: 0.75em;
+    }
+    
+    .list-group-item {
+        border: none;
+        border-bottom: 1px solid #dee2e6;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+</style>
+{% endblock %}

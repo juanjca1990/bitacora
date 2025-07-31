@@ -54,9 +54,14 @@ urlpatterns = [
     path('cambiar_usuario/', cambiar_usuario, name='cambiar_usuario'),
     path('usuarios/', lista_usuarios, name='usuarios'),
     path('administradores/', lista_administradores, name='administradores'),
-    path('lista_usuarios_empresa/<int:empresa_id>/', lista_usuarios_empresa, name='lista_usuarios_empresa'),
-    path('lista_administradores_empresa/<int:empresa_id>/', lista_administradores_empresa, name='lista_administradores_empresa'),
+    path('lista_usuarios_empresa/<int:empresa_id>/', listaUsuariosEmpresa, name='listaUsuariosEmpresa'),
+    path('lista_administradores_empresa/<int:empresa_id>/', listaAdministradoresEmpresa, name='listaAdministradoresEmpresa'),
     path('register_user_vista_admin/<int:empresa_id>/', register_user_vista_admin, name='Register_user_vista_admin'),
+    
+    # ADMINISTRADORES MULTI-EMPRESA
+    path('administradores_multi_empresa/', listaAdministradoresMultiEmpresa, name='listaAdministradoresMultiEmpresa'),
+    path('admin_multi_empresa/editar/<int:admin_id>/', editarAdminMultiEmpresa, name='editarAdminMultiEmpresa'),
+    path('admin_multi_empresa/ver/<int:admin_id>/', detallesAdminMultiEmpresa, name='detallesAdminMultiEmpresa'),
     
     # TRANSACCIONES
     path('transacciones', transacciones, name='transacciones'),

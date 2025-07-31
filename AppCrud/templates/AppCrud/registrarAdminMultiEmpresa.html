@@ -1,0 +1,126 @@
+{% extends "AppCrud/padre.html" %}
+{% block title %}Registrar Administrador Multi-Empresa{% endblock %}
+{% block bloque %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <h2 class="text-center mb-4">Registrar Administrador</h2>
+            
+            {% if mensaje %}
+                <div class="alert alert-info">{{ mensaje }}</div>
+            {% endif %}
+            
+            <form method="POST"> 
+                {% csrf_token %}
+                
+                <div class="mb-3">
+                    <label for="{{ form.usuario.id_for_label }}" class="form-label">Usuario:</label>
+                    {{ form.usuario }}
+                    {% if form.usuario.errors %}
+                        <div class="text-danger">{{ form.usuario.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="mb-3">
+                    <label class="form-label">Empresas a Administrar:</label>
+                    <div class="form-text mb-2">{{ form.empresas.help_text }}</div>
+                    <div id="cargando-empresas" class="text-center" style="display: none;">
+                        <div class="spinner-border spinner-border-sm" role="status">
+                            <span class="visually-hidden">Cargando...</span>
+                        </div>
+                        <span class="ms-2">Cargando empresas del usuario...</span>
+                    </div>
+                    <div class="row" id="empresas-container">
+                        {% for choice in form.empresas %}
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="form-check">
+                                    {{ choice.tag }}
+                                    <label class="form-check-label" for="{{ choice.id_for_label }}">
+                                        {{ choice.choice_label }}
+                                    </label>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    {% if form.empresas.errors %}
+                        <div class="text-danger">{{ form.empresas.errors }}</div>
+                    {% endif %}
+                </div>
+                
+                <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                    <a href="{% url 'inicio' %}" class="btn btn-secondary me-md-2">Cancelar</a>
+                    <button type="submit" class="btn btn-primary">Asignar como Administrador</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+// Función para cargar las empresas administradas por el usuario seleccionado
+function cargarEmpresasUsuario(userId) {
+    if (!userId) {
+        // Si no hay usuario seleccionado, desmarcar todas las empresas
+        document.querySelectorAll('input[name="empresas"]').forEach(checkbox => {
+            checkbox.checked = false;
+        });
+        return;
+    }
+    
+    // Hacer petición AJAX para obtener las empresas del usuario
+    fetch(`/get_empresas_usuario/${userId}/`)
+        .then(response => response.json())
+        .then(data => {
+            // Desmarcar todas las empresas primero
+            document.querySelectorAll('input[name="empresas"]').forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            
+            // Marcar las empresas que ya administra el usuario
+            if (data.empresas_administradas && data.empresas_administradas.length > 0) {
+                data.empresas_administradas.forEach(empresaId => {
+                    const checkbox = document.querySelector(`input[name="empresas"][value="${empresaId}"]`);
+                    if (checkbox) {
+                        checkbox.checked = true;
+                    }
+                });
+            }
+        })
+        .catch(error => {
+            console.error('Error al cargar empresas del usuario:', error);
+        });
+}
+
+// Escuchar cambios en el select de usuario
+document.addEventListener('DOMContentLoaded', function() {
+    const usuarioSelect = document.getElementById('{{ form.usuario.id_for_label }}');
+    if (usuarioSelect) {
+        usuarioSelect.addEventListener('change', function() {
+            cargarEmpresasUsuario(this.value);
+        });
+        
+        // Si ya hay un usuario seleccionado al cargar la página, cargar sus empresas
+        if (usuarioSelect.value) {
+            cargarEmpresasUsuario(usuarioSelect.value);
+        }
+    }
+});
+</script>
+
+<style>
+    .form-check {
+        padding: 0.5rem;
+        border: 1px solid #dee2e6;
+        border-radius: 0.375rem;
+        background-color: #f8f9fa;
+    }
+    
+    .form-check:hover {
+        background-color: #e9ecef;
+    }
+    
+    .form-check-input:checked + .form-check-label {
+        font-weight: bold;
+    }
+</style>
+{% endblock %}

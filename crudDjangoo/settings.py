@@ -144,6 +144,6 @@ EMAIL_HOST_PASSWORD = 'ocwmzuyovxazsnxc'  # tu contraseña de correo electrónic
 EMAIL_USE_SSL = True
 DEFAULT_FROM_EMAIL = "Aplicaciones Exerom: aplicaciones@exerom.com"
 SESSION_EXPIRE_AT_BROWSER_CLOSE = True
-SESSION_COOKIE_AGE = 1000  # Opcional:
+SESSION_COOKIE_AGE = 5000  # Opcional:
 
 LOGIN_URL = '/AppCrud/login/'  # Cambia esta URL según tu configuración

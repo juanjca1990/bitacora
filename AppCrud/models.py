@@ -52,7 +52,25 @@ class Estado(models.Model):
         return f"{self.registro_verificado.nombre} - {self.tipo_verificacion} - {self.fecha}"
 
 class User(AbstractUser):
-    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, null=True, blank=True)  # Permitir nulos
+    empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, null=True, blank=True)  # Permitir nulos (mantener para compatibilidad)
+    empresas_administradas = models.ManyToManyField(Empresa, blank=True, related_name='administradores')  # Nueva relación para múltiples empresas
+    
+    def tiene_acceso_empresa(self, empresa):
+        """Verifica si el usuario tiene acceso a una empresa específica"""
+        if self.is_superuser:
+            return True
+        # Verificar si es su empresa asignada (compatibilidad hacia atrás)
+        if self.empresa == empresa:
+            return True
+        # Verificar si es administrador de la empresa
+        return self.empresas_administradas.filter(id=empresa.id).exists()
+    
+    def es_admin_empresa(self, empresa):
+        """Verifica si el usuario es administrador de una empresa específica"""
+        if self.is_superuser:
+            return True
+        return self.empresas_administradas.filter(id=empresa.id).exists()
+    
     class Meta:
          
         permissions = (
