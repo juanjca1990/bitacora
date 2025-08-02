@@ -20,8 +20,18 @@ def filtrar_contactos(request, contactos):
 @login_required
 @permission_required('AppCrud.view_contacto', raise_exception=True)
 def contacto(request):
-    empresas = Empresa.objects.all()
-    empresas = filtrar_empresas(request, empresas)
+    # Si el usuario puede cambiar de empresa, usar solo la empresa actual de la sesión
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_actual = Empresa.objects.get(id=request.session.get('empresa_actual'))
+            empresas = [empresa_actual]
+        except Empresa.DoesNotExist:
+            empresas = Empresa.objects.all()
+            empresas = filtrar_empresas(request, empresas)
+    else:
+        empresas = Empresa.objects.all()
+        empresas = filtrar_empresas(request, empresas)
+    
     contactos_by_empresa = {}
     for empresa in empresas:
         contactos = Contacto.objects.filter(empresa=empresa)
@@ -29,9 +39,21 @@ def contacto(request):
         if contactos.exists():
             contactos_by_empresa[empresa] = contactos
     usuario = request.user
+    
+    # Obtener empresa actual desde la sesión si es admin, o la empresa del usuario si no es admin
+    empresa_actual = None
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_actual = Empresa.objects.get(id=request.session['empresa_actual'])
+        except Empresa.DoesNotExist:
+            pass
+    elif not request.session.get('admin') and usuario.empresa:
+        empresa_actual = usuario.empresa
+    
     return render(request, "AppCrud/contacto.html", {
         "contactos_by_empresa": contactos_by_empresa,
         "admin_perm": usuario.has_perm('AppCrud.empresa_admin'),
+        "empresa_actual": empresa_actual
     })
 
 

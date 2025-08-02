@@ -1,14 +1,46 @@
 from .base_imports import *
+from .job_views import filtrar_empresas
 
 
 @login_required
 @permission_required('AppCrud.view_empresa', raise_exception=True)
 def empresa(request):
-    empresas = Empresa.objects.all()
     usuario = request.user
+    
+    # Mostrar todas las empresas para permitir la navegación y cambio
+    # Si es administrador, usar filtrar_empresas para obtener solo las que puede administrar
+    empresas = Empresa.objects.all()
+    if request.session.get('admin'):
+        empresas = filtrar_empresas(request, empresas)
+    
+    # Obtener todas las empresas disponibles para el dropdown de cambio de empresa
+    if request.session.get('admin'):
+        if usuario.is_superuser:
+            todas_empresas = Empresa.objects.all()
+        elif hasattr(usuario, 'empresas_administradas') and usuario.empresas_administradas.exists():
+            todas_empresas = usuario.empresas_administradas.all()
+            if usuario.empresa:
+                todas_empresas = todas_empresas.union(Empresa.objects.filter(id=usuario.empresa.id))
+        else:
+            todas_empresas = empresas
+    else:
+        todas_empresas = empresas
+    
+    # Obtener empresa actual desde la sesión si es admin, o la empresa del usuario si no es admin
+    empresa_actual = None
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_actual = Empresa.objects.get(id=request.session['empresa_actual'])
+        except Empresa.DoesNotExist:
+            pass
+    elif not request.session.get('admin') and usuario.empresa:
+        empresa_actual = usuario.empresa
+    
     return render(request, "AppCrud/empresa.html", {
         "empresas": empresas,
-        "empresa_admin": usuario.has_perm('AppCrud.empresa_admin')
+        "empresa_admin": usuario.has_perm('AppCrud.empresa_admin'),
+        "todas_empresas": todas_empresas,
+        "empresa_actual": empresa_actual
     })
 
 

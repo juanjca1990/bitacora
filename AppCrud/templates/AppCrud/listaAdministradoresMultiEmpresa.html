@@ -102,9 +102,48 @@
         border-radius: 0.25rem;
         margin-right: 0.25rem;
     }
-    
-    .table-corporativa tbody tr:hover {
-        background-color: #f8f9fa;
-    }
+
+
+        /* Estilos corporativos para tablas */
+        .table-corporativa thead th {
+            background-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
+            border: none !important;
+        }
+        
+        .table-corporativa tbody tr:nth-child(odd) {
+            background-color: #f8f9fa !important;
+        }
+        
+        .table-corporativa tbody tr:nth-child(even) {
+            background-color: white !important;
+        }
+        
+        .table-corporativa tbody tr:hover {
+            background-color: #e9ecef !important;
+        }
+        
+        .btn-corporativo {
+            background-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            border-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
+            margin: 2px !important;
+            padding: 6px 12px !important;
+            font-size: 0.8rem !important;
+            border-radius: 4px !important;
+            text-decoration: none !important;
+            display: inline-block !important;
+            font-weight: 500 !important;
+            transition: all 0.2s ease !important;
+        }
+        
+        .btn-corporativo:hover {
+            background-color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
+            border-color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            text-decoration: none !important;
+            transform: translateY(-1px) !important;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
+        }
 </style>
 {% endblock %}

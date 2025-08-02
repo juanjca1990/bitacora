@@ -36,66 +36,64 @@
 
         <h1 class="mt-5">JOBS</h1>
         {% for empresa, jobs in paginated_jobs.items %}
-            {% if user.empresa == empresa or user.is_superuser %}
-                <h2>{{ empresa }}</h2>
-                <div class="table-responsive mt-3">
-                    <table class="table table-bordered table-striped table-corporativa">
-                        <thead class="bg-light">
-                            <tr>
-                                <th scope="col">Nombre</th>
-                                <th scope="col">Empresa</th>
-                                <th scope="col">Ambiente</th>
-                                <th scope="col">Descripción</th>
-                                {% if admin_perm %}
-                                    <th scope="col"></th>
-                                    <th scope="col"></th>
-                                {% endif %}
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {% for job in jobs %}
-                                {% if job.empresa == empresa %}
-                                    <tr>
-                                        <th scope="row">{{ job.nombre }}</th>
-                                        <td>{{ job.empresa }}</td>
-                                        <td>{{ job.ambiente }}</td>
-                                        <td>{{ job.descripcion }}</td>
-                                        {% if admin_perm %}
-                                            <td>
-                                                <a class="btn-corporativo" href="{% url 'borrarJob' job.id %}">Eliminar</a>
-                                            </td>
-                                            <td>
-                                                <a class="btn-corporativo" href="{% url 'editarJob' job.id %}">Editar</a>
-                                            </td>
-                                        {% endif %}
-                                    </tr>
+            <h2>{{ empresa }}</h2>
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered table-striped table-corporativa">
+                    <thead class="bg-light">
+                        <tr>
+                            <th scope="col">Nombre</th>
+                            <th scope="col">Empresa</th>
+                            <th scope="col">Ambiente</th>
+                            <th scope="col">Descripción</th>
+                            {% if admin_perm %}
+                                <th scope="col"></th>
+                                <th scope="col"></th>
+                            {% endif %}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for job in jobs %}
+                            {% if job.empresa == empresa %}
+                                <tr>
+                                    <th scope="row">{{ job.nombre }}</th>
+                                    <td>{{ job.empresa }}</td>
+                                    <td>{{ job.ambiente }}</td>
+                                    <td>{{ job.descripcion }}</td>
+                                    {% if admin_perm %}
+                                        <td>
+                                            <a class="btn-corporativo" href="{% url 'borrarJob' job.id %}">Eliminar</a>
+                                        </td>
+                                        <td>
+                                            <a class="btn-corporativo" href="{% url 'editarJob' job.id %}">Editar</a>
+                                        </td>
+                                    {% endif %}
+                                </tr>
+                            {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+                {% if jobs.has_other_pages %}
+                    <div class="pagination">
+                        {% if jobs.has_previous %}
+                            <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}=1{% endif %}">&laquo;</a>
+                            <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.previous_page_number }}{% endif %}">&lsaquo;</a>
+                        {% endif %}
+                        {% with counter=forloop.counter %}
+                            {% for num in jobs.paginator.page_range %}
+                                {% if jobs.number == num %}
+                                    <span class="current-page">{{ num }}</span>
+                                {% elif num > jobs.number|add:'-3' and num < jobs.number|add:'3' %}
+                                    <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{counter}}={{ num }}{% endif %}">{{ num }}</a>
                                 {% endif %}
                             {% endfor %}
-                        </tbody>
-                    </table>
-                    {% if jobs.has_other_pages %}
-                        <div class="pagination">
-                            {% if jobs.has_previous %}
-                                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}=1{% endif %}">&laquo;</a>
-                                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.previous_page_number }}{% endif %}">&lsaquo;</a>
-                            {% endif %}
-                            {% with counter=forloop.counter %}
-                                {% for num in jobs.paginator.page_range %}
-                                    {% if jobs.number == num %}
-                                        <span class="current-page">{{ num }}</span>
-                                    {% elif num > jobs.number|add:'-3' and num < jobs.number|add:'3' %}
-                                        <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{counter}}={{ num }}{% endif %}">{{ num }}</a>
-                                    {% endif %}
-                                {% endfor %}
-                            {% endwith %}
-                            {% if jobs.has_next %}
-                                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.next_page_number }}{% endif %}">&rsaquo;</a>
-                                <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.paginator.num_pages }}{% endif %}">&raquo;</a>
-                            {% endif %}
-                        </div>
-                    {% endif %}
-                </div>
-            {% endif %}
+                        {% endwith %}
+                        {% if jobs.has_next %}
+                            <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.next_page_number }}{% endif %}">&rsaquo;</a>
+                            <a href="{% if request.get_full_path %}?{{ request.GET.urlencode }}{% if request.GET %}&{% endif %}page{{forloop.counter}}={{ jobs.paginator.num_pages }}{% endif %}">&raquo;</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
         {% endfor %}
         {% if admin_perm %}
             <a href="{% url 'JobForm' %}" type="button" class="btn-corporativo mt-2">Agregar job</a>
@@ -105,12 +103,12 @@
         <style>
 
         label,span,h1,h2,h3,h4,h5,h6 {
-            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
         }
         /* Estilos corporativos para tablas */
         .table-corporativa thead th {
-            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            background-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
             border: none !important;
         }
         
@@ -127,9 +125,9 @@
         }
         
         .btn-corporativo {
-            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            border-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            background-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            border-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
             margin: 2px !important;
             padding: 6px 12px !important;
             font-size: 0.8rem !important;
@@ -141,9 +139,9 @@
         }
         
         .btn-corporativo:hover {
-            background-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
-            border-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
-            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            background-color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
+            border-color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
             text-decoration: none !important;
             transform: translateY(-1px) !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;

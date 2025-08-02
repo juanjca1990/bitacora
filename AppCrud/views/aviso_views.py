@@ -6,11 +6,43 @@ from django.core.mail import send_mail
 @login_required
 @permission_required('AppCrud.view_aviso', raise_exception=True)
 def aviso(request):
-    avisos = Aviso.objects.all()
     usuario = request.user
+    
+    # Si el usuario puede cambiar de empresa, filtrar por la empresa actual de la sesión
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_actual = Empresa.objects.get(id=request.session.get('empresa_actual'))
+            avisos = Aviso.objects.filter(empresa=empresa_actual)
+        except Empresa.DoesNotExist:
+            avisos = Aviso.objects.all()
+    else:
+        # Filtrar avisos según los permisos del usuario
+        if not usuario.is_superuser:
+            if usuario.empresa:
+                avisos = Aviso.objects.filter(empresa=usuario.empresa)
+                empresa_actual = usuario.empresa
+            else:
+                avisos = Aviso.objects.none()
+                empresa_actual = None
+        else:
+            avisos = Aviso.objects.all()
+            empresa_actual = None
+    
+    # Obtener empresa actual desde la sesión si es admin, o la empresa del usuario si no es admin
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_actual = Empresa.objects.get(id=request.session['empresa_actual'])
+        except Empresa.DoesNotExist:
+            empresa_actual = None
+    elif not request.session.get('admin') and usuario.empresa:
+        empresa_actual = usuario.empresa
+    else:
+        empresa_actual = None
+    
     return render(request, "AppCrud/aviso.html", {
         "avisos": avisos,
-        "admin_perm": usuario.has_perm('AppCrud.empresa_admin')
+        "admin_perm": usuario.has_perm('AppCrud.empresa_admin'),
+        "empresa_actual": empresa_actual
     })
 
 

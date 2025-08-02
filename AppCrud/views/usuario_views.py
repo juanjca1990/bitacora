@@ -269,7 +269,9 @@ def cambiar_empresa(request):
             # Verificar que el usuario tenga acceso a esta empresa
             if request.user.tiene_acceso_empresa(nueva_empresa):
                 request.session['empresa_actual'] = nueva_empresa.id
-                request.session['admin'] = True
+                # Mantener la sesión admin si el usuario tiene permisos para cambiar empresas
+                if request.user.is_superuser or (hasattr(request.user, 'empresas_administradas') and request.user.empresas_administradas.exists()):
+                    request.session['admin'] = True
                 print(f"Empresa cambiada a: {nueva_empresa.nombre}")
             else:
                 print("Usuario no tiene acceso a esta empresa")
@@ -280,7 +282,6 @@ def cambiar_empresa(request):
         return redirect('inicio')
     # Si GET, muestra la página normalmente
     print("fue un GET")
-    # return redirect('inicio')
 
 @login_required
 def logout_request(request):
@@ -380,7 +381,7 @@ def listaAdministradoresEmpresa(request, empresa_id):
     admin_obj = admin_paginator.get_page(admin_page)
     return render(request, "AppCrud/listaAdministradoresEmpresa.html", {
         "administradores": admin_obj,
-        "empresa": empresa,
+        "empresa_actual": empresa,
     })
 
 @login_required

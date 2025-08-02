@@ -3,8 +3,11 @@ from .base_imports import *
 def obtener_fecha(request):
     hoy = now().date()
     vista = request.GET.get('vista', 'semana')  # Por defecto vista semanal
+    empresa_id = request.session.get('empresa_actual')
     url = reverse('monitoreo', args=[hoy.strftime("%Y-%m-%d")])
     params = f"?vista={vista}"
+    if empresa_id:
+        params += f"&empresa_id={empresa_id}"
     return redirect(url + params)
 
 def cambiarFechaMonitor_admin(request):
@@ -25,7 +28,7 @@ def cambiarFechaMonitor_admin(request):
 def cambiarFechaMonitor_otros(request):
     mes = int(request.GET.get('mes', date.today().month))
     anio = int(request.GET.get('anio', date.today().year))
-    empresa_id = request.GET.get('empresa_id')
+    empresa_id = request.GET.get('empresa_id') or request.session.get('empresa_actual')
     servidor_id = request.GET.get('servidor_id')
     admin = request.GET.get('admin')
 
@@ -33,8 +36,13 @@ def cambiarFechaMonitor_otros(request):
 
     url = reverse('monitoreo', args=[nueva_fecha.strftime("%Y-%m-%d")])
     params = ""
+    if empresa_id:
+        params = f"?empresa_id={empresa_id}"
     if servidor_id:
-        params = f"?servidor_id={servidor_id}"
+        if params:
+            params += f"&servidor_id={servidor_id}"
+        else:
+            params = f"?servidor_id={servidor_id}"
     return redirect(url + params)
 
 def cambiarSemanaMonitor_admin(request):
@@ -64,6 +72,7 @@ def cambiarSemanaMonitor_admin(request):
 def cambiarSemanaMonitor_otros(request):
     fecha_actual = request.GET.get('fecha')
     direccion = request.GET.get('direccion')  # 'anterior' o 'siguiente'
+    empresa_id = request.GET.get('empresa_id') or request.session.get('empresa_actual')
     servidor_id = request.GET.get('servidor_id')
     
     if fecha_actual:
@@ -80,6 +89,8 @@ def cambiarSemanaMonitor_otros(request):
     
     url = reverse('monitoreo', args=[nueva_fecha.strftime("%Y-%m-%d")])
     params = "?vista=semana"
+    if empresa_id:
+        params += f"&empresa_id={empresa_id}"
     if servidor_id:
         params += f"&servidor_id={servidor_id}"
     return redirect(url + params)
@@ -101,21 +112,30 @@ def cambiarMesMonitor_admin(request):
 def cambiarMesMonitor_otros(request):
     mes = int(request.GET.get('mes', date.today().month))
     anio = int(request.GET.get('anio', date.today().year))
+    empresa_id = request.GET.get('empresa_id') or request.session.get('empresa_actual')
     servidor_id = request.GET.get('servidor_id')
     
     nueva_fecha = date(anio, mes, 1)
 
     url = reverse('monitoreo', args=[nueva_fecha.strftime("%Y-%m-%d")])
     params = ""
+    if empresa_id:
+        params = f"?empresa_id={empresa_id}"
     if servidor_id:
-        params = f"?servidor_id={servidor_id}"
+        if params:
+            params += f"&servidor_id={servidor_id}"
+        else:
+            params = f"?servidor_id={servidor_id}"
     return redirect(url + params)
 
 def obtener_fecha_monitor_admin(request):
     hoy = now().date()
     vista = request.GET.get('vista', 'semana')  # Por defecto vista semanal
+    empresa_id = request.GET.get('empresa_id') or request.session.get('empresa_actual')
     url = reverse('monitoreo_admin', args=[hoy.strftime("%Y-%m-%d")])
     params = f"?vista={vista}"
+    if empresa_id:
+        params += f"&empresa_id={empresa_id}"
     return redirect(url + params)
 
 def habilitar_deshabilitar_edicion_admin(request):
@@ -146,6 +166,7 @@ def habilitar_deshabilitar_edicion_admin(request):
 def habilitar_deshabilitar_edicion_otros(request):
     # Obtener la fecha actual desde el referer o usar fecha de hoy por defecto
     fecha_actual = request.GET.get('fecha', date.today().strftime("%Y-%m-%d"))
+    empresa_id = request.GET.get('empresa_id') or request.session.get('empresa_actual')
     servidor_id = request.GET.get('servidor_id')
     
     if request.session["bloquear_edicion"] == True:
@@ -160,6 +181,8 @@ def habilitar_deshabilitar_edicion_otros(request):
     # Construir la URL con los parámetros preservados
     url = reverse('monitoreo', args=[fecha_actual])
     params = "?vista=semana"
+    if empresa_id:
+        params += f"&empresa_id={empresa_id}"
     if servidor_id:
         params += f"&servidor_id={servidor_id}"
     
@@ -303,12 +326,35 @@ def monitoreo_admin(request, hoy):
 @login_required
 def monitoreo(request, hoy):
     usuario = request.user
-    if not usuario.empresa:
-        return render(request, "AppCrud/monitoreo.html", {
-            "error": "No tiene empresa asociada. Contacte al administrador."
-        })
+    
+    # Obtener empresa_id de la URL o de la sesión
+    empresa_id = request.GET.get('empresa_id') or request.session.get('empresa_actual')
+    
+    if empresa_id:
+        try:
+            empresa = Empresa.objects.get(id=empresa_id)
+            # Verificar que el usuario tenga acceso a esta empresa
+            if not usuario.tiene_acceso_empresa(empresa):
+                if not usuario.empresa:
+                    return render(request, "AppCrud/monitoreo.html", {
+                        "error": "No tiene empresa asociada. Contacte al administrador."
+                    })
+                empresa = usuario.empresa
+        except Empresa.DoesNotExist:
+            # Si la empresa no existe, usar la empresa del usuario
+            if not usuario.empresa:
+                return render(request, "AppCrud/monitoreo.html", {
+                    "error": "No tiene empresa asociada. Contacte al administrador."
+                })
+            empresa = usuario.empresa
+    else:
+        # Si no hay empresa_id, usar la empresa del usuario
+        if not usuario.empresa:
+            return render(request, "AppCrud/monitoreo.html", {
+                "error": "No tiene empresa asociada. Contacte al administrador."
+            })
+        empresa = usuario.empresa
 
-    empresa = Empresa.objects.get(nombre=usuario.empresa.nombre)
     servidores = Servidor.objects.filter(empresa=empresa)
 
     servidor_id = request.GET.get('servidor_id')
@@ -409,6 +455,7 @@ def monitoreo(request, hoy):
         "anio_siguiente": anio_siguiente,
         "mes_nombre": mes_nombre,
         "empresa": empresa,
+        "empresa_id": empresa.id,
         "servidores": Servidor.objects.filter(empresa=empresa),
         "servidor_id": int(servidor_id) if servidor_id else None,
         "usuario_puede_editar": usuario_puede_editar,

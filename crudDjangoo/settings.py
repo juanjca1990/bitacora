@@ -65,7 +65,6 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
-                'AppCrud.context_processors.lista_usuarios',
                 'AppCrud.context_processors.lista_empresas',
                 'AppCrud.context_processors.empresa_permissions',
             ],
