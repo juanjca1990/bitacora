@@ -2,7 +2,20 @@ from .base_imports import *
 
 @login_required
 def servidores(request):
-    empresa = request.user.empresa
+    usuario = request.user
+    
+    # Si el usuario puede cambiar de empresa, usar la empresa actual de la sesión
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_actual = Empresa.objects.get(id=request.session.get('empresa_actual'))
+            empresa = empresa_actual
+        except Empresa.DoesNotExist:
+            empresa = usuario.empresa
+            empresa_actual = usuario.empresa
+    else:
+        empresa = usuario.empresa
+        empresa_actual = usuario.empresa
+    
     servidores = Servidor.objects.filter(empresa=empresa)
     servidores_con_registros = []
     for servidor in servidores:
@@ -11,7 +24,10 @@ def servidores(request):
             'servidor': servidor,
             'registros': registros
         })
-    return render(request, "AppCrud/servidores.html", {"servidores_con_registros": servidores_con_registros})
+    return render(request, "AppCrud/servidores.html", {
+        "servidores_con_registros": servidores_con_registros,
+        "empresa_actual": empresa_actual
+    })
 
 @login_required
 def servidorForm(request):
@@ -19,7 +35,15 @@ def servidorForm(request):
         form = ServidorForm(request.POST)
         if form.is_valid():
             servidor = form.save(commit=False)
-            servidor.empresa = request.user.empresa  # Asigna la empresa del usuario
+            # Si el usuario puede cambiar de empresa, usar la empresa actual de la sesión
+            if request.session.get('admin') and request.session.get('empresa_actual'):
+                try:
+                    empresa_actual = Empresa.objects.get(id=request.session.get('empresa_actual'))
+                    servidor.empresa = empresa_actual
+                except Empresa.DoesNotExist:
+                    servidor.empresa = request.user.empresa
+            else:
+                servidor.empresa = request.user.empresa  # Asigna la empresa del usuario
             servidor.save()
             form.save_m2m()
             return redirect('servidores')

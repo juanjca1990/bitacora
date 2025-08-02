@@ -26,12 +26,12 @@
             <style>
 
         label,span,h1,h2,h3,h4,h5,h6 {
-            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorPrimario }}{% else %}{{ user.empresa.visual_empresa.colorPrimario }}{% endif %} !important;
         }
         /* Estilos corporativos para tablas */
         .table-corporativa thead th {
-            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            background-color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorPrimario }}{% else %}{{ user.empresa.visual_empresa.colorPrimario }}{% endif %} !important;
+            color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorSecundario }}{% else %}{{ user.empresa.visual_empresa.colorSecundario }}{% endif %} !important;
             border: none !important;
         }
         
@@ -48,9 +48,9 @@
         }
         
         .btn-corporativo {
-            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            border-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            background-color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorPrimario }}{% else %}{{ user.empresa.visual_empresa.colorPrimario }}{% endif %} !important;
+            border-color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorPrimario }}{% else %}{{ user.empresa.visual_empresa.colorPrimario }}{% endif %} !important;
+            color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorSecundario }}{% else %}{{ user.empresa.visual_empresa.colorSecundario }}{% endif %} !important;
             margin: 2px !important;
             padding: 6px 12px !important;
             font-size: 0.8rem !important;
@@ -62,9 +62,9 @@
         }
         
         .btn-corporativo:hover {
-            background-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
-            border-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
-            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            background-color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorSecundario }}{% else %}{{ user.empresa.visual_empresa.colorSecundario }}{% endif %} !important;
+            border-color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorSecundario }}{% else %}{{ user.empresa.visual_empresa.colorSecundario }}{% endif %} !important;
+            color: {% if empresa_actual %}{{ empresa_actual.visual_empresa.colorPrimario }}{% else %}{{ user.empresa.visual_empresa.colorPrimario }}{% endif %} !important;
             text-decoration: none !important;
             transform: translateY(-1px) !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;

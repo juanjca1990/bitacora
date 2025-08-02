@@ -23,8 +23,18 @@ def filtrar_bitacoras(request, bitacoras):
 
 
 def obtener_bitacoras_paginadas(request):
-    empresas = Empresa.objects.all()
-    empresas = filtrar_empresas(request, empresas)
+    # Si el usuario puede cambiar de empresa, usar solo la empresa actual de la sesión para filtrar
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_actual = Empresa.objects.get(id=request.session.get('empresa_actual'))
+            empresas = [empresa_actual]  # Solo para filtrar el contenido
+        except Empresa.DoesNotExist:
+            empresas = Empresa.objects.all()
+            empresas = filtrar_empresas(request, empresas)
+    else:
+        empresas = Empresa.objects.all()
+        empresas = filtrar_empresas(request, empresas)
+    
     bitacoras_by_empresa = {}
     for empresa in empresas:
         bitacoras = Bitacora.objects.filter(empresa=empresa)
@@ -49,11 +59,35 @@ def obtener_bitacoras_paginadas(request):
 def bitacora(request):
     usuario = request.user
     paginated_bitacoras, empresas = obtener_bitacoras_paginadas(request)
+    
+    # Obtener todas las empresas disponibles para el dropdown de cambio de empresa
+    if request.session.get('admin'):
+        if usuario.is_superuser:
+            todas_empresas = Empresa.objects.all()
+        elif hasattr(usuario, 'empresas_administradas') and usuario.empresas_administradas.exists():
+            todas_empresas = usuario.empresas_administradas.all()
+            if usuario.empresa:
+                todas_empresas = todas_empresas.union(Empresa.objects.filter(id=usuario.empresa.id))
+        else:
+            todas_empresas = empresas
+    else:
+        todas_empresas = empresas
+
+    # Obtener empresa actual desde la sesión si es admin, o la empresa del usuario si no es admin
+    empresa_actual = None
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_actual = Empresa.objects.get(id=request.session['empresa_actual'])
+        except Empresa.DoesNotExist:
+            pass
+    elif not request.session.get('admin') and usuario.empresa:
+        empresa_actual = usuario.empresa
 
     return render(request, "AppCrud/bitacora.html", {
         "paginated_bitacoras": paginated_bitacoras, 
         "admin_perm": usuario.has_perm('AppCrud.empresa_admin'), 
-        "empresas": empresas
+        "empresas": todas_empresas,
+        "empresa_actual": empresa_actual
     })
 
 

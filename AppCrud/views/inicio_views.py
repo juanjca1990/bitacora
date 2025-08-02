@@ -6,12 +6,25 @@ def inicio(request):
     user = request.user
     admin = 0
     print("Usuario:", user)
-    if user.is_superuser or request.session.get('admin', True):
-        admin = 1
-        request.session['admin'] = True  # Add 'admin' to session storage
-        request.session["bloquear_edicion"] = True
+    
+    # Determinar si el usuario puede cambiar de empresa
+    if user.is_authenticated:
+        if user.is_superuser:
+            # Los superusuarios pueden cambiar entre todas las empresas
+            admin = 1
+            request.session['admin'] = True
+            request.session["bloquear_edicion"] = True
+        elif hasattr(user, 'empresas_administradas') and user.empresas_administradas.exists():
+            # Los usuarios que administran empresas pueden cambiar entre ellas
+            admin = 1
+            request.session['admin'] = True
+            request.session["bloquear_edicion"] = True
+        else:
+            # Usuarios regulares no pueden cambiar de empresa
+            request.session['admin'] = False
+            request.session["bloquear_edicion"] = True
     else:
-        request.session['admin'] = False  # Ensure 'admin' is False for non-staff users
+        request.session['admin'] = False
         request.session["bloquear_edicion"] = True
 
     return render(request, "AppCrud/inicio.html", {"mensaje": mensaje, "admin": admin})

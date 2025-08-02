@@ -265,7 +265,7 @@ $(document).ready(function() {
         <style>
 
         label,span,h1,h2,h3,h4,h5,h6 {
-            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
         }
         
         /* Estilos para el modal */
@@ -287,8 +287,8 @@ $(document).ready(function() {
         
         /* Estilos corporativos para tablas */
         .table-corporativa thead th {
-            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            background-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
             border: none !important;
         }
         
@@ -305,9 +305,9 @@ $(document).ready(function() {
         }
         
         .btn-corporativo {
-            background-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            border-color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
-            color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
+            background-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            border-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
             margin: 2px !important;
             padding: 6px 12px !important;
             font-size: 0.8rem !important;
@@ -319,9 +319,9 @@ $(document).ready(function() {
         }
         
         .btn-corporativo:hover {
-            background-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
-            border-color: {{ user.empresa.visual_empresa.colorSecundario }} !important;
-            color: {{ user.empresa.visual_empresa.colorPrimario }} !important;
+            background-color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
+            border-color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
+            color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
             text-decoration: none !important;
             transform: translateY(-1px) !important;
             box-shadow: 0 2px 4px rgba(0,0,0,0.2) !important;
