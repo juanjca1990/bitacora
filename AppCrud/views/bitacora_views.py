@@ -45,6 +45,8 @@ def obtener_bitacoras_paginadas(request):
     paginated_bitacoras = {}
     table_number = 1
     for empresa, bitacoras in bitacoras_by_empresa.items():
+        # Add explicit ordering to avoid pagination warning
+        bitacoras = bitacoras.order_by('id')
         paginator = Paginator(bitacoras, 20)
         page_number = request.GET.get('page{}'.format(table_number), 1)
         page_obj = paginator.get_page(page_number)

@@ -44,7 +44,7 @@
                 </a>
 
                 {% if user.is_staff or user.is_superuser %}
-                    <a href="{% url 'habilitar_deshabilitar_edicion_otros' %}?fecha={{ fecha_actual|date:'Y-m-d' }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn-mes-navegacion btn-icon-only" style="margin-left: 10px;" title="Habilitar/Deshabilitar edición" onclick="guardarPosicionScroll()">
+                    <a href="{% url 'habilitar_deshabilitar_edicion' %}?fecha={{ fecha_actual|date:'Y-m-d' }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn-mes-navegacion btn-icon-only" style="margin-left: 10px;" title="Habilitar/Deshabilitar edición" onclick="guardarPosicionScroll()">
                         <i class="fas fa-edit" style="color: #ffffff;"></i>
                     </a>
                 {% endif %}
@@ -57,9 +57,9 @@
             
             <!-- Navegación de meses -->
             <div class="nav-meses-adicional">
-                <a href="{% url 'cambiarMesMonitor_otros' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn btn-mes-navegacion" onclick="guardarPosicionScroll()">← Mes Anterior</a>
+                <a href="{% url 'cambiarMesMonitor' %}?mes={{ mes_anterior }}&anio={{ anio_anterior }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn btn-mes-navegacion" onclick="guardarPosicionScroll()">← Mes Anterior</a>
                 <span style="margin: 0 15px;"><b>{{ mes_nombre }} {{ anio_actual }}</b></span>
-                <a href="{% url 'cambiarMesMonitor_otros' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn btn-mes-navegacion" onclick="guardarPosicionScroll()">Mes Siguiente →</a>
+                <a href="{% url 'cambiarMesMonitor' %}?mes={{ mes_siguiente }}&anio={{ anio_siguiente }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn btn-mes-navegacion" onclick="guardarPosicionScroll()">Mes Siguiente →</a>
             </div>
         </div>
         {% for servidor_obj, tabla_datos in registros_por_servidor.items %}
@@ -67,9 +67,9 @@
                 <h2>Servidor: {{ servidor_obj.nombre }}</h2>
                 <!-- Navegación de semanas -->
                 <div class="nav-semanas" style="margin-bottom: 15px;">
-                    <a href="{% url 'cambiarSemanaMonitor_otros' %}?fecha={{ fecha_actual|date:'Y-m-d' }}&direccion=anterior{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn btn-mes-navegacion" onclick="guardarPosicionScroll()">← Semana Anterior</a>
+                    <a href="{% url 'cambiarSemanaMonitor' %}?fecha={{ fecha_actual|date:'Y-m-d' }}&direccion=anterior{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn btn-mes-navegacion" onclick="guardarPosicionScroll()">← Semana Anterior</a>
                     <span style="margin: 0 15px;"><b>{{ inicio_semana|date:'d/m/Y' }}-{{ fin_semana|date:'d/m/Y' }}</b></span>
-                    <a href="{% url 'cambiarSemanaMonitor_otros' %}?fecha={{ fecha_actual|date:'Y-m-d' }}&direccion=siguiente{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn btn-mes-navegacion" onclick="guardarPosicionScroll()">Semana Siguiente →</a>
+                    <a href="{% url 'cambiarSemanaMonitor' %}?fecha={{ fecha_actual|date:'Y-m-d' }}&direccion=siguiente{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn btn-mes-navegacion" onclick="guardarPosicionScroll()">Semana Siguiente →</a>
                 </div>
             </div>
             {% if tabla_datos %}

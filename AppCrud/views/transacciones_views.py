@@ -7,7 +7,8 @@ def transacciones(request):
     query = request.GET.get('q', '')
     if query:
         registros = registros.filter(nombre__icontains=query) | registros.filter(descripcion__icontains=query)
-    # Paginación
+    # Paginación - Add explicit ordering to avoid pagination warning
+    registros = registros.order_by('id')
     paginator = Paginator(registros, 10)  # 10 por página
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
