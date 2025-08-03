@@ -53,8 +53,6 @@ urlpatterns = [
     path('editarPerfil', editarPerfil, name="EditarPerfil"), 
     path('cambiar_empresa/', cambiar_empresa, name='cambiar_empresa'),
     path('usuarios/', lista_usuarios, name='usuarios'),
-    path('administradores/', lista_administradores, name='administradores'),
-    path('lista_usuarios_empresa/<int:empresa_id>/', listaUsuariosEmpresa, name='listaUsuariosEmpresa'),
     path('lista_administradores_empresa/<int:empresa_id>/', listaAdministradoresEmpresa, name='listaAdministradoresEmpresa'),
     path('register_user_vista_admin/<int:empresa_id>/', register_user_vista_admin, name='Register_user_vista_admin'),
     
@@ -77,20 +75,13 @@ urlpatterns = [
     
     # MONITOREO
     path('monitoreo/<str:hoy>/', monitoreo, name='monitoreo'),
-    path('monitoreo_admin/<str:hoy>/', monitoreo_admin, name='monitoreo_admin'),
-    path('obtener_fecha_monitor_admin/', obtener_fecha_monitor_admin, name='obtener_fecha_monitor_admin'),
     path('obtener_fecha/', obtener_fecha, name='obtener_fecha'),
     path('registrarEstado/', registrarEstado, name='registrarEstado'),
     path('registrarDescripcion/', registrarDescripcion, name='registrarDescripcion'),
     path('imprimirRegistroMes/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMes, name="imprimirRegistroMes"),
-    path('cambiarFechaMonitor_admin/',cambiarFechaMonitor_admin, name='cambiarFechaMonitor_admin'),
-    path('cambiarFechaMonitor_otros/',cambiarFechaMonitor_otros, name='cambiarFechaMonitor_otros'),
-    path('cambiarSemanaMonitor_admin/',cambiarSemanaMonitor_admin, name='cambiarSemanaMonitor_admin'),
-    path('cambiarSemanaMonitor_otros/',cambiarSemanaMonitor_otros, name='cambiarSemanaMonitor_otros'),
-    path('cambiarMesMonitor_admin/',cambiarMesMonitor_admin, name='cambiarMesMonitor_admin'),
-    path('cambiarMesMonitor_otros/',cambiarMesMonitor_otros, name='cambiarMesMonitor_otros'),
+    path('cambiarSemanaMonitor/',cambiarSemanaMonitor, name='cambiarSemanaMonitor'),
+    path('cambiarMesMonitor/',cambiarMesMonitor,name='cambiarMesMonitor'),
     path('imprimirRegistroMesCompleto/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMesCompleto, name="imprimirRegistroMesCompleto"),
-    path('habilitar_deshabilitar_edicion_admin/', habilitar_deshabilitar_edicion_admin, name='habilitar_deshabilitar_edicion_admin'),
-    path('habilitar_deshabilitar_edicion_otros/', habilitar_deshabilitar_edicion_otros, name='habilitar_deshabilitar_edicion_otros'),
+    path('habilitar_deshabilitar_edicion/', habilitar_deshabilitar_edicion, name='habilitar_deshabilitar_edicion'),
     
 ]

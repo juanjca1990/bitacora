@@ -118,6 +118,8 @@ def listaAdministradoresMultiEmpresa(request):
             Q(username__icontains=q_admins) | Q(email__icontains=q_admins)
         )
     
+    # Add explicit ordering to avoid pagination warning
+    administradores = administradores.order_by('id')
     admin_paginator = Paginator(administradores, 10)
     admin_page = request.GET.get('admin_page', 1)
     admin_obj = admin_paginator.get_page(admin_page)
@@ -302,62 +304,14 @@ def lista_usuarios(request):
         usuarios = usuarios.filter(
             Q(username__icontains=q_usuarios) | Q(email__icontains=q_usuarios)
         )
+    # Add explicit ordering to avoid pagination warning
+    usuarios = usuarios.order_by('id')
     usuarios_paginator = Paginator(usuarios.distinct(), 10)
     usuarios_page = request.GET.get('usuarios_page', 1)
     usuarios_obj = usuarios_paginator.get_page(usuarios_page)
     return render(request, "AppCrud/lista_usuarios.html", {
         "usuarios": usuarios_obj,
     })
-
-@login_required
-#lista todos los administradores de las empresas tomando únicamente la tabla user_empresas_administradas
-def lista_administradores(request):
-    User = get_user_model()
-    q_admins = request.GET.get('q_admins', '')
-    
-    # Solo incluir usuarios que tienen empresas administradas (tabla user_empresas_administradas)
-    # Usar prefetch_related para optimizar las consultas de empresas administradas
-    administradores = User.objects.filter(
-        empresas_administradas__isnull=False
-    ).prefetch_related('empresas_administradas').distinct()
-    
-    if q_admins:
-        administradores = administradores.filter(
-            Q(username__icontains=q_admins) | Q(email__icontains=q_admins)
-        )
-    
-    admin_paginator = Paginator(administradores, 10)
-    admin_page = request.GET.get('admin_page', 1)
-    admin_obj = admin_paginator.get_page(admin_page)
-    return render(request, "AppCrud/lista_administradores.html", {
-        "administradores": admin_obj,
-    })
-    
-    
-@login_required
-#lista los usuarios de una empresa en particular, excluyendo los administradores
-def listaUsuariosEmpresa(request, empresa_id): 
-    User = get_user_model()
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    q_usuarios = request.GET.get('q_usuarios', '')
-    
-    # Usuarios de la empresa específica, excluyendo superusuarios y administradores de empresas
-    usuarios = User.objects.filter(
-        is_superuser=False, 
-        empresa_id=empresa_id
-    ).exclude(empresas_administradas__isnull=False)
-    
-    if q_usuarios:
-        usuarios = usuarios.filter(
-            Q(username__icontains=q_usuarios) | Q(email__icontains=q_usuarios)
-        )
-    usuarios_paginator = Paginator(usuarios.distinct(), 10)
-    usuarios_page = request.GET.get('usuarios_page', 1)
-    usuarios_obj = usuarios_paginator.get_page(usuarios_page)
-    return render(request, "AppCrud/listaUsuariosEmpresa.html", {
-        "usuarios": usuarios_obj,
-        "empresa": empresa,
-    })   
     
 @login_required
 #lista los administradores de una empresa en particular, incluyendo los superusuarios y usuarios que administran esa empresa
@@ -376,6 +330,8 @@ def listaAdministradoresEmpresa(request, empresa_id):
             Q(username__icontains=q_admins) | Q(email__icontains=q_admins)
         )
     
+    # Add explicit ordering to avoid pagination warning
+    administradores = administradores.order_by('id')
     admin_paginator = Paginator(administradores, 10)
     admin_page = request.GET.get('admin_page', 1)
     admin_obj = admin_paginator.get_page(admin_page)
