@@ -24,10 +24,10 @@
 
     {% if registros_por_servidor %}
         <div class="leyenda-iconos">
-            <div class="icono-item"><i class="fas fa-check-circle icono-verde"></i> Verificado correctamente</div>
-            <div class="icono-item"><i class="fas fa-circle icono-vacio"></i> No verificado</div>
-            <div class="icono-item"><i class="fas fa-times-circle icono-rojo"></i> Fallo en la verificación</div>
-            <div class="icono-item"><i class="fas fa-exclamation-circle icono-amarillo"></i> Verificación pendiente</div>
+            <div class="icono-item">✅ Verificado correctamente</div>
+            <div class="icono-item">🔘 No verificado</div>
+            <div class="icono-item">❌ Fallo en la verificación</div>
+            <div class="icono-item">⚠️ Verificación pendiente</div>
             <div class="icono-item"><div class="cuadro-azul"></div> Se realizó un comentario</div>
         </div>
 
@@ -121,22 +121,26 @@
                                             </button>
                                         </div>
                                     {% else %}
-                                        <div class="icon-container"
-                                                data-servidor-id="{{ servidor_obj.id }}"
-                                                data-empresa-id="{{ empresa.id }}"
-                                                onclick="cambiarEstado(this, '{{ fila.registro.id }}', '{{ dias_periodo|index:forloop.counter0 }}')">
-                                            <i class="fas 
-                                                {% if estado %}
-                                                    {% if estado.tipo_verificacion == 'bien' %}fa-check-circle icono-verde
-                                                    {% elif estado.tipo_verificacion == 'no_verificado' %}fa-circle icono-vacio
-                                                    {% elif estado.tipo_verificacion == 'fallo' %}fa-times-circle icono-rojo
-                                                    {% elif estado.tipo_verificacion == 'pendiente' %}fa-exclamation-circle icono-amarillo
-                                                    {% else %}fa-circle icono-vacio
-                                                    {% endif %}
-                                                {% else %}
-                                                    fa-circle icono-vacio
-                                                {% endif %}
-                                            "></i>
+                                        <div class="estado-container">
+                                            <select class="estado-select" 
+                                                    data-servidor-id="{{ servidor_obj.id }}"
+                                                    data-empresa-id="{{ empresa.id }}"
+                                                    data-registro-id="{{ fila.registro.id }}"
+                                                    data-fecha="{{ dias_periodo|index:forloop.counter0 }}"
+                                                    onchange="cambiarEstado(this)">
+                                                <option value="no_verificado" {% if not estado or estado.tipo_verificacion == 'no_verificado' %}selected{% endif %}>
+                                                    🔘
+                                                </option>
+                                                <option value="bien" {% if estado and estado.tipo_verificacion == 'bien' %}selected{% endif %}>
+                                                    ✅
+                                                </option>
+                                                <option value="fallo" {% if estado and estado.tipo_verificacion == 'fallo' %}selected{% endif %}>
+                                                    ❌
+                                                </option>
+                                                <option value="pendiente" {% if estado and estado.tipo_verificacion == 'pendiente' %}selected{% endif %}>
+                                                    ⚠️
+                                                </option>
+                                            </select>
                                         </div>
                                         <div>
                                             <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %}"
@@ -185,10 +189,11 @@
     let modal = document.getElementById("modalDescripcion");
     let registroIdGlobal, fechaGlobal, estadoIdGlobal, servidorIdGlobal, empresaIdGlobal;
 
-    function cambiarEstado(elemento, registroId, fecha) {
+    function cambiarEstado(selectElement) {
         // Verificar si el usuario tiene permisos para editar
         {% if not usuario_puede_editar %}
             alert("No tiene permisos para modificar los estados.");
+            selectElement.selectedIndex = selectElement.getAttribute('data-original-index') || 0;
             return;
         {% endif %}
         
@@ -198,26 +203,17 @@
         // Guardar la posición de scroll antes de hacer la petición
         guardarPosicionScroll();
         
-        let icono = elemento.querySelector("i");
-        let estados = [
-            { clase: "fa-circle icono-vacio", valor: "no_verificado" },
-            { clase: "fa-check-circle icono-verde", valor: "bien" },
-            { clase: "fa-times-circle icono-rojo", valor: "fallo" },
-            { clase: "fa-exclamation-circle icono-amarillo", valor: "pendiente" }
-        ];
-        let indexActual = estados.findIndex(e => icono.className.includes(e.clase.split(" ")[0]));
-        let nuevoIndex = (indexActual + 1) % estados.length;
-        let nuevoValor = estados[nuevoIndex].valor;
-        icono.className = "fas " + estados[nuevoIndex].clase;
+        let registroId = selectElement.getAttribute('data-registro-id');
+        let fecha = selectElement.getAttribute('data-fecha');
+        let nuevoValor = selectElement.value;
+        let servidorId = selectElement.getAttribute('data-servidor-id');
+        let empresaId = selectElement.getAttribute('data-empresa-id');
+        
         let fechaObj = new Date(fecha);
         if (isNaN(fechaObj.getTime())) {
             fechaObj = new Date(parseInt(fecha));
         }
         let fechaFormateada = fechaObj.toISOString().split("T")[0];
-
-        // Obtener servidor_id y empresa_id de los atributos data-
-        let servidorId = elemento.getAttribute('data-servidor-id');
-        let empresaId = elemento.getAttribute('data-empresa-id');
 
         fetch("/AppCrud/registrarEstado/", {
             method: "POST",
@@ -233,12 +229,18 @@
             if (!data.success) {
                 ocultarSpinner();
                 alert("Error al actualizar el estado.");
+                // Revertir el cambio en caso de error
+                selectElement.selectedIndex = selectElement.getAttribute('data-original-index') || 0;
             } else {
-                location.reload();
+                // Actualizar el índice original para futuras reversiones
+                selectElement.setAttribute('data-original-index', selectElement.selectedIndex);
+                ocultarSpinner();
             }
         }).catch(error => {
             ocultarSpinner();
             alert("Error de conexión al actualizar el estado.");
+            // Revertir el cambio en caso de error
+            selectElement.selectedIndex = selectElement.getAttribute('data-original-index') || 0;
         });
     }
 
@@ -396,6 +398,12 @@
     // Restaurar la posición al cargar la página
     document.addEventListener('DOMContentLoaded', function() {
         restaurarPosicionScroll();
+        
+        // Inicializar los índices originales de los selects
+        document.querySelectorAll('.estado-select').forEach(function(select) {
+            select.setAttribute('data-original-index', select.selectedIndex);
+        });
+        
         mostrarSpinner();
         setTimeout(function() {
             ocultarSpinner();
@@ -643,6 +651,53 @@
         font-size: 18px;
         font-weight: bold;
         margin: 0;
+    }
+
+    /* Estilos para el select de estados */
+    .estado-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .estado-select {
+        width: 100%;
+        max-width: 140px;
+        padding: 4px 8px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        background-color: white;
+        font-size: 12px;
+        cursor: pointer;
+        text-align: center;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right 8px center;
+        background-size: 16px;
+        padding-right: 30px;
+    }
+
+    .estado-select:focus {
+        border-color: {{ empresa.visual_empresa.colorPrimario }};
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+    }
+
+    .estado-select option {
+        padding: 8px;
+        font-size: 12px;
+    }
+
+    /* Responsive para el select */
+    @media (max-width: 768px) {
+        .estado-select {
+            max-width: 120px;
+            font-size: 11px;
+        }
     }
 </style>
 {% endblock %}
