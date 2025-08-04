@@ -106,15 +106,33 @@ def job(request):
 @permission_required('AppCrud.add_job', raise_exception=True)
 def jobForm(request):
     usuario = request.user
+    
+    # Determinar la empresa para filtrar
+    empresa_para_filtrar = None
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_para_filtrar = Empresa.objects.get(id=request.session.get('empresa_actual'))
+        except Empresa.DoesNotExist:
+            empresa_para_filtrar = None
+    elif usuario.empresa:
+        empresa_para_filtrar = usuario.empresa
+    
     if request.method == 'POST':
-        formulario = JobForm(request.POST, user=usuario)
+        formulario = JobForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
         print("-------------------------------")
         print(formulario)
         print("-------------------------------")
         if formulario.is_valid():
             info = formulario.cleaned_data
             print(info)
-            job = Job(**info)
+            
+            # Crear el job con la empresa actual, no con el texto del formulario
+            job = Job(
+                nombre=info['nombre'],
+                ambiente=info['ambiente'],
+                descripcion=info['descripcion'],
+                empresa=empresa_para_filtrar or usuario.empresa
+            )
             job.save()
             jobs = Job.objects.all()
             return redirect("./job/", {
@@ -123,7 +141,7 @@ def jobForm(request):
             })
         
     else:
-        formulario = JobForm(user=usuario)
+        formulario = JobForm(user=usuario, empresa_filtro=empresa_para_filtrar)
         return render(request, "AppCrud/jobForm.html", {"formulario": formulario})
 
 
@@ -132,14 +150,20 @@ def jobForm(request):
 def editarJob(request, id):
     job = Job.objects.get(id=id)
     usuario = request.user
+    if (not usuario.empresa == job.empresa) and not usuario.is_superuser:
+        raise PermissionDenied("No tiene permisos para editar este job.")
+    
+    # Determinar la empresa para filtrar (usar la empresa del job existente)
+    empresa_para_filtrar = job.empresa
+    
     if request.method == "POST":
-        form = JobForm(request.POST, user=usuario)
+        form = JobForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
         if form.is_valid():
             info = form.cleaned_data
             job.nombre = info["nombre"]
             job.ambiente = info["ambiente"]
             job.descripcion = info["descripcion"]
-            job.empresa = info["empresa"]
+            # La empresa no cambia, mantener la empresa original del job
             job.save()
             jobs = Job.objects.all()
             return redirect("../job/", {
@@ -149,10 +173,10 @@ def editarJob(request, id):
     else:
         formulario = JobForm(initial={
             "nombre": job.nombre, 
-            "empresa": job.empresa, 
+            "empresa": job.empresa.nombre, 
             "ambiente": job.ambiente, 
             "descripcion": job.descripcion
-        }, user=usuario)
+        }, user=usuario, empresa_filtro=empresa_para_filtrar)
         return render(request, "AppCrud/editarJob.html", {
             "formulario": formulario, 
             "job": job

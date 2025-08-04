@@ -5,20 +5,41 @@ from django.forms import ModelForm, formsets
 from .models import Empresa, Registro, Servidor, VisualEmpresa, Contacto, Job
 
 class JobForm(forms.Form):
-    empresa = forms.ModelChoiceField(queryset=Empresa.objects.none(), label="Empresa", to_field_name="nombre",
-                                     widget=forms.Select(attrs={'class': 'form-control'}))
+    empresa = forms.CharField(
+        label="Empresa", 
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+        required=False
+    )
     ambiente = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
     nombre = forms.CharField(widget=forms.TextInput(attrs={'class': 'form-control'}))
     descripcion = forms.CharField(widget=forms.Textarea(attrs={'class': 'form-control'}), required=False)
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # retrieve the user from kwargs
+        empresa_filtro = kwargs.pop('empresa_filtro', None)  # retrieve empresa_filtro from kwargs
         super(JobForm, self).__init__(*args, **kwargs)
+        
+        # Determinar la empresa actual y establecer su valor
+        empresa_actual = None
         if user and user.is_superuser:
-            self.fields['empresa'].queryset = Empresa.objects.all()
+            # Si es superuser pero se especifica una empresa para filtrar (admin multi-empresa)
+            if empresa_filtro:
+                empresa_actual = empresa_filtro
+            else:
+                # Si es superuser sin filtro específico, no mostrar ninguna empresa por defecto
+                self.fields['empresa'].initial = ""
         elif user and user.empresa:
-            user_empresa = user.empresa
-            self.fields['empresa'].queryset = Empresa.objects.filter(nombre=user_empresa)
+            # Usuario normal con empresa asignada
+            empresa_actual = user.empresa
+        elif empresa_filtro:
+            # Usuario admin multi-empresa con empresa específica seleccionada
+            empresa_actual = empresa_filtro
+        
+        # Establecer el valor de la empresa en el campo deshabilitado
+        if empresa_actual:
+            self.fields['empresa'].initial = empresa_actual.nombre
+            # Guardar la empresa actual para uso posterior en el procesamiento del formulario
+            self._empresa_actual = empresa_actual
 
 class EmpresaVisualForm(forms.ModelForm):
     class Meta:
@@ -48,8 +69,11 @@ class ContactoForm(forms.Form):
         label='',
         max_length=255,
     )
-    empresa = forms.ModelChoiceField(queryset=Empresa.objects.none(), label="Empresa", to_field_name="nombre",
-                                     widget=forms.Select(attrs={'class': 'form-control'}))
+    empresa = forms.CharField(
+        label="Empresa", 
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+        required=False
+    )
     telefono = forms.CharField(
         widget=forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Teléfono'}),
         label='',
@@ -57,19 +81,36 @@ class ContactoForm(forms.Form):
     )
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # retrieve the user from kwargs
+        empresa_filtro = kwargs.pop('empresa_filtro', None)  # retrieve empresa_filtro from kwargs
         super(ContactoForm, self).__init__(*args, **kwargs)
+        
+        # Determinar la empresa actual y establecer su valor
+        empresa_actual = None
         if user and user.is_superuser:
-            self.fields['empresa'].queryset = Empresa.objects.all()
+            # Si es superuser pero se especifica una empresa para filtrar (admin multi-empresa)
+            if empresa_filtro:
+                empresa_actual = empresa_filtro
+            else:
+                # Si es superuser sin filtro específico, no mostrar ninguna empresa por defecto
+                self.fields['empresa'].initial = ""
         elif user and user.empresa:
-            user_empresa = user.empresa
-            self.fields['empresa'].queryset = Empresa.objects.filter(nombre=user_empresa)
+            # Usuario normal con empresa asignada
+            empresa_actual = user.empresa
+        elif empresa_filtro:
+            # Usuario admin multi-empresa con empresa específica seleccionada
+            empresa_actual = empresa_filtro
+        
+        # Establecer el valor de la empresa en el campo deshabilitado
+        if empresa_actual:
+            self.fields['empresa'].initial = empresa_actual.nombre
+            # Guardar la empresa actual para uso posterior en el procesamiento del formulario
+            self._empresa_actual = empresa_actual
 
 class AvisoForm(forms.Form):
-    empresa = forms.ModelChoiceField(
-        queryset=Empresa.objects.none(),
-        label="Empresa",
-        to_field_name="nombre",
-        widget=forms.Select(attrs={'class': 'form-control'}),
+    empresa = forms.CharField(
+        label="Empresa", 
+        widget=forms.TextInput(attrs={'class': 'form-control', 'readonly': 'readonly'}),
+        required=False
     )
     ambiente = forms.CharField(
         widget=forms.TextInput(attrs={'class': 'form-control'}),
@@ -80,10 +121,11 @@ class AvisoForm(forms.Form):
         max_length=255,
     )
     contacto = forms.ModelChoiceField(
-        queryset=Contacto.objects.all(),
+        queryset=Contacto.objects.none(),
         label="Contacto",
         to_field_name="nombre",
         widget=forms.Select(attrs={'class': 'form-control'}),
+        required=False
     )
     job = forms.ModelChoiceField(
         queryset=Job.objects.none(),
@@ -94,14 +136,46 @@ class AvisoForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # retrieve the user from kwargs
+        empresa_filtro = kwargs.pop('empresa_filtro', None)  # retrieve empresa_filtro from kwargs
         super(AvisoForm, self).__init__(*args, **kwargs)
+        
+        # Determinar la empresa actual y establecer su valor
+        empresa_actual = None
         if user and user.is_superuser:
-            self.fields['empresa'].queryset = Empresa.objects.all()
-            self.fields['job'].queryset = Job.objects.all()
+            # Si es superuser pero se especifica una empresa para filtrar (admin multi-empresa)
+            if empresa_filtro:
+                empresa_actual = empresa_filtro
+            else:
+                # Si es superuser sin filtro específico, no mostrar ninguna empresa por defecto
+                self.fields['empresa'].initial = ""
         elif user and user.empresa:
-            user_empresa = user.empresa
-            self.fields['empresa'].queryset = Empresa.objects.filter(nombre=user_empresa)
-            self.fields['job'].queryset = Job.objects.filter(empresa=user_empresa)
+            # Usuario normal con empresa asignada
+            empresa_actual = user.empresa
+        elif empresa_filtro:
+            # Usuario admin multi-empresa con empresa específica seleccionada
+            empresa_actual = empresa_filtro
+        
+        # Establecer el valor de la empresa en el campo deshabilitado
+        if empresa_actual:
+            self.fields['empresa'].initial = empresa_actual.nombre
+            # Guardar la empresa actual para uso posterior en el procesamiento del formulario
+            self._empresa_actual = empresa_actual
+            # Filtrar jobs por la empresa actual
+            self.fields['job'].queryset = Job.objects.filter(empresa=empresa_actual)
+            # Filtrar contactos por la empresa actual
+            contactos_empresa = Contacto.objects.filter(empresa=empresa_actual)
+            if contactos_empresa.exists():
+                self.fields['contacto'].queryset = contactos_empresa
+                self.fields['contacto'].required = True
+            else:
+                # Si no hay contactos, mostrar queryset vacío y agregar mensaje
+                self.fields['contacto'].queryset = Contacto.objects.none()
+                self.fields['contacto'].help_text = "Debe agregar un contacto primero."
+                self.fields['contacto'].widget.attrs['disabled'] = 'disabled'
+        else:
+            # Sin empresa definida, no mostrar jobs ni contactos
+            self.fields['job'].queryset = Job.objects.none()
+            self.fields['contacto'].queryset = Contacto.objects.none()
 
 
 class BitacoraForm(forms.Form):
@@ -137,12 +211,25 @@ class BitacoraForm(forms.Form):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)  # retrieve the user from kwargs
+        empresa_filtro = kwargs.pop('empresa_filtro', None)  # retrieve empresa_filtro from kwargs
         super(BitacoraForm, self).__init__(*args, **kwargs)
+        
         if user and user.is_superuser:
-            self.fields['job'].queryset = Job.objects.all()
+            # Si es superuser pero se especifica una empresa para filtrar (admin multi-empresa)
+            if empresa_filtro:
+                self.fields['job'].queryset = Job.objects.filter(empresa=empresa_filtro)
+            else:
+                self.fields['job'].queryset = Job.objects.all()
         elif user and user.empresa:
+            # Usuario normal con empresa asignada
             user_empresa = user.empresa
-            self.fields['job'].queryset = Job.objects.filter(empresa__nombre=user_empresa)
+            self.fields['job'].queryset = Job.objects.filter(empresa=user_empresa)
+        elif empresa_filtro:
+            # Usuario admin multi-empresa con empresa específica seleccionada
+            self.fields['job'].queryset = Job.objects.filter(empresa=empresa_filtro)
+        else:
+            # Sin empresa definida, no mostrar jobs
+            self.fields['job'].queryset = Job.objects.none()
         periodo_value = self.initial.get('periodo', '')  # Get the initial value of 'periodo' field
         periodo_choices = [choice[0] for choice in self.fields['periodo'].choices]
         if periodo_value not in periodo_choices:

@@ -97,8 +97,19 @@ def bitacora(request):
 @permission_required('AppCrud.add_bitacora', raise_exception=True)
 def bitacoraForm(request, other_periodo=None):
     usuario = request.user
+    
+    # Determinar la empresa para filtrar jobs
+    empresa_para_filtrar = None
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_para_filtrar = Empresa.objects.get(id=request.session.get('empresa_actual'))
+        except Empresa.DoesNotExist:
+            pass
+    elif usuario.empresa:
+        empresa_para_filtrar = usuario.empresa
+    
     if request.method == 'POST':
-        formulario = BitacoraForm(request.POST, user=usuario)
+        formulario = BitacoraForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
         if formulario.is_valid():
             info = formulario.cleaned_data
             print("Per:" + info['periodo'])
@@ -117,7 +128,7 @@ def bitacoraForm(request, other_periodo=None):
                 "admin_perm": usuario.has_perm('AppCrud.empresa_admin')
             })
     else:
-        formulario = BitacoraForm(user=usuario)
+        formulario = BitacoraForm(user=usuario, empresa_filtro=empresa_para_filtrar)
     return render(request, "AppCrud/bitacoraForm.html", {"formulario": formulario})
 
 
@@ -128,8 +139,12 @@ def editarBitacora(request, id):
     usuario = request.user
     if (not usuario.empresa == bitacora.empresa) and not usuario.is_superuser:
         raise PermissionDenied("You do not have permission to access this page.")
+    
+    # Determinar la empresa para filtrar jobs (usar la empresa de la bitácora existente)
+    empresa_para_filtrar = bitacora.empresa
+    
     if request.method == "POST":
-        form = BitacoraForm(request.POST, user=usuario)
+        form = BitacoraForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
         print(form)
         if form.is_valid():
             print("Hola")
@@ -167,7 +182,7 @@ def editarBitacora(request, id):
             "periodo": bitacora.periodo,
             "dias": bitacora.dias,
             "descripcion": bitacora.descripcion
-        }, user=usuario)
+        }, user=usuario, empresa_filtro=empresa_para_filtrar)
         return render(request, "AppCrud/editarBitacora.html", {
             "formulario": formulario, 
             "bitacora": bitacora

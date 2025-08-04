@@ -50,14 +50,33 @@ def aviso(request):
 @permission_required('AppCrud.add_aviso', raise_exception=True)
 def avisoForm(request):
     usuario = request.user
+    
+    # Determinar la empresa para filtrar
+    empresa_para_filtrar = None
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_para_filtrar = Empresa.objects.get(id=request.session.get('empresa_actual'))
+        except Empresa.DoesNotExist:
+            empresa_para_filtrar = None
+    elif usuario.empresa:
+        empresa_para_filtrar = usuario.empresa
+    
     if request.method == 'POST':
-        formulario = AvisoForm(request.POST, user=usuario)
+        formulario = AvisoForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
         print("-------------------------------")
         print(formulario)
         print("-------------------------------")
         if formulario.is_valid():
             info = formulario.cleaned_data
-            aviso = Aviso(**info)
+            
+            # Crear el aviso con la empresa actual, no con el texto del formulario
+            aviso = Aviso(
+                ambiente=info['ambiente'],
+                inicio=info['inicio'],
+                contacto=info['contacto'],
+                job=info['job'],
+                empresa=empresa_para_filtrar or usuario.empresa
+            )
             aviso.save()
             avisos = Aviso.objects.all()
             return redirect("./aviso/", {
@@ -66,7 +85,7 @@ def avisoForm(request):
             })
         
     else:
-        formulario = AvisoForm(user=usuario)
+        formulario = AvisoForm(user=usuario, empresa_filtro=empresa_para_filtrar)
         return render(request, "AppCrud/avisoForm.html", {"formulario": formulario})
 
 
@@ -75,11 +94,17 @@ def avisoForm(request):
 def editarAviso(request, id):
     aviso = Aviso.objects.get(id=id)
     usuario = request.user
+    if (not usuario.empresa == aviso.empresa) and not usuario.is_superuser:
+        raise PermissionDenied("No tiene permisos para editar este aviso.")
+    
+    # Determinar la empresa para filtrar (usar la empresa del aviso existente)
+    empresa_para_filtrar = aviso.empresa
+    
     if request.method == "POST":
-        form = AvisoForm(request.POST, user=usuario)
+        form = AvisoForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
         if form.is_valid():
             info = form.cleaned_data
-            aviso.empresa = info["empresa"]
+            # La empresa no cambia, mantener la empresa original del aviso
             aviso.ambiente = info["ambiente"]
             aviso.inicio = info["inicio"]
             aviso.job = info["job"]
@@ -92,12 +117,12 @@ def editarAviso(request, id):
             })
     else:
         formulario = AvisoForm(initial={
-            "empresa": aviso.empresa, 
+            "empresa": aviso.empresa.nombre, 
             "ambiente": aviso.ambiente, 
             "inicio": aviso.inicio, 
             "job": aviso.job,
             "contacto": aviso.contacto
-        }, user=usuario)
+        }, user=usuario, empresa_filtro=empresa_para_filtrar)
         return render(request, "AppCrud/editarAviso.html", {
             "formulario": formulario, 
             "aviso": aviso
