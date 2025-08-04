@@ -61,14 +61,32 @@ def contacto(request):
 @permission_required('AppCrud.add_contacto', raise_exception=True)
 def contactoForm(request):
     usuario = request.user
+    
+    # Determinar la empresa para filtrar
+    empresa_para_filtrar = None
+    if request.session.get('admin') and request.session.get('empresa_actual'):
+        try:
+            empresa_para_filtrar = Empresa.objects.get(id=request.session.get('empresa_actual'))
+        except Empresa.DoesNotExist:
+            empresa_para_filtrar = None
+    elif usuario.empresa:
+        empresa_para_filtrar = usuario.empresa
+    
     if request.method == 'POST':
-        formulario = ContactoForm(request.POST, user=usuario)
+        formulario = ContactoForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
         print("-------------------------------")
         print(formulario)
         print("-------------------------------")
         if formulario.is_valid():
             info = formulario.cleaned_data
-            contacto = Contacto(**info)
+            
+            # Crear el contacto con la empresa actual, no con el texto del formulario
+            contacto = Contacto(
+                nombre=info['nombre'],
+                mail=info['mail'],
+                telefono=info['telefono'],
+                empresa=empresa_para_filtrar or usuario.empresa
+            )
             contacto.save()
             contactos = Contacto.objects.all()
             usuario = request.user
@@ -78,7 +96,7 @@ def contactoForm(request):
             })
         
     else:
-        formulario = ContactoForm(user=usuario)
+        formulario = ContactoForm(user=usuario, empresa_filtro=empresa_para_filtrar)
         return render(request, "AppCrud/contactoForm.html", {"formulario": formulario})
 
 
@@ -87,13 +105,20 @@ def contactoForm(request):
 def editarContacto(request, id):
     contacto = Contacto.objects.get(id=id)
     usuario = request.user
+    if (not usuario.empresa == contacto.empresa) and not usuario.is_superuser:
+        raise PermissionDenied("No tiene permisos para editar este contacto.")
+    
+    # Determinar la empresa para filtrar (usar la empresa del contacto existente)
+    empresa_para_filtrar = contacto.empresa
+    
     if request.method == "POST":
-        form = ContactoForm(request.POST, user=usuario)
+        form = ContactoForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
         if form.is_valid():
             info = form.cleaned_data
             contacto.nombre = info["nombre"]
             contacto.mail = info["mail"]
             contacto.telefono = info["telefono"]
+            # La empresa no cambia, se mantiene la original
             contacto.save()
             contactos = Contacto.objects.all()
             usuario = request.user
@@ -104,10 +129,9 @@ def editarContacto(request, id):
     else:
         formulario = ContactoForm(initial={
             "nombre": contacto.nombre,
-            "empresa": contacto.empresa, 
             "mail": contacto.mail, 
             "telefono": contacto.telefono
-        }, user=usuario)
+        }, user=usuario, empresa_filtro=empresa_para_filtrar)
         return render(request, "AppCrud/editarContacto.html", {
             "formulario": formulario, 
             "contacto": contacto
