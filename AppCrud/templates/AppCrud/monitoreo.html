@@ -114,8 +114,8 @@
                                             "></i>
                                         </div>
                                         <div>
-                                            <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %} descripcion-btn-deshabilitado"
-                                                data-tooltip="{% if estado.descripcion %}{{ estado.descripcion|escapejs }}{% else %}Sin comentarios{% endif %}"
+                                            <button class="descripcion-btn {% if estado and estado.tiene_comentarios %}descripcion-btn-azul{% endif %} descripcion-btn-deshabilitado"
+                                                data-tooltip="{% if estado.tiene_comentarios %}{{ estado.obtener_comentarios_formateados|escapejs }}{% else %}Sin comentarios{% endif %}"
                                                 onmouseenter="mostrarTooltip(this)" onmouseleave="ocultarTooltip()">
                                                 <i class="fas fa-comment"></i>
                                             </button>
@@ -129,22 +129,27 @@
                                                     data-fecha="{{ dias_periodo|index:forloop.counter0 }}"
                                                     onchange="cambiarEstado(this)">
                                                 <option value="no_verificado" {% if not estado or estado.tipo_verificacion == 'no_verificado' %}selected{% endif %}>
-                                                    🔘
+                                                    🔘 no verificado
                                                 </option>
                                                 <option value="bien" {% if estado and estado.tipo_verificacion == 'bien' %}selected{% endif %}>
-                                                    ✅
+                                                    ✅ bien
                                                 </option>
                                                 <option value="fallo" {% if estado and estado.tipo_verificacion == 'fallo' %}selected{% endif %}>
-                                                    ❌
+                                                    ❌ fallo
                                                 </option>
                                                 <option value="pendiente" {% if estado and estado.tipo_verificacion == 'pendiente' %}selected{% endif %}>
-                                                    ⚠️
+                                                    ⚠️ pendiente
                                                 </option>
                                             </select>
                                         </div>
                                         <div>
-                                            <button class="descripcion-btn {% if estado and estado.descripcion %}descripcion-btn-azul{% endif %}"
-                                                onclick="abrirModal({{ fila.registro.id }}, '{{ dias_periodo|index:forloop.counter0 }}', {% if estado %}'{{ estado.id }}'{% else %}''{% endif %}, '{{ estado.descripcion|default:'' }}', '{{ servidor_obj.id }}', '{{ empresa.id }}')">
+                                            <button class="descripcion-btn {% if estado and estado.tiene_comentarios %}descripcion-btn-azul{% endif %}"
+                                                data-registro-id="{{ fila.registro.id }}"
+                                                data-fecha="{{ dias_periodo|index:forloop.counter0 }}"
+                                                data-estado-id="{% if estado %}{{ estado.id }}{% else %}{% endif %}"
+                                                data-servidor-id="{{ servidor_obj.id }}"
+                                                data-empresa-id="{{ empresa.id }}"
+                                                onclick="abrirModalFromButton(this)">
                                                 <i class="fas fa-comment"></i>
                                             </button>
                                         </div>
@@ -169,9 +174,24 @@
 <div id="modalDescripcion" class="modal">
     <div class="modal-content">
         <span class="close" onclick="cerrarModal()">&times;</span>
-        <h3>Agregar Comentario</h3>
-        <textarea id="descripcionText" placeholder="Escriba un comentario..."></textarea>
-        <button class="submit-btn" onclick="guardarDescripcion()">Guardar</button>
+        <h3>Comentarios</h3>
+        
+        <!-- Área para mostrar comentarios existentes -->
+        <div id="comentariosExistentes" style="background-color: #f9f9f9; border: 1px solid #ddd; padding: 10px; margin-bottom: 15px; border-radius: 5px; max-height: 200px; overflow-y: auto;">
+            <h4 style="margin-top: 0;">Comentarios anteriores:</h4>
+            <div id="listaComentarios" style="white-space: pre-line; font-family: monospace; font-size: 0.9em;">
+                Cargando comentarios...
+            </div>
+        </div>
+        
+        <!-- Campo para nuevo comentario -->
+        <label for="descripcionText"><strong>Agregar nuevo comentario:</strong></label>
+        <textarea id="descripcionText" placeholder="Escriba un nuevo comentario..." style="margin-top: 5px;"></textarea>
+        
+        <div style="margin-top: 15px;">
+            <button class="submit-btn" onclick="guardarDescripcion()">Agregar Comentario</button>
+            <button class="btn btn-secondary" onclick="cerrarModal()" style="margin-left: 10px;">Cancelar</button>
+        </div>
     </div>
 </div>
 
@@ -247,7 +267,7 @@
     function abrirModal(registroId, fecha, estadoId, descripcionActual = "", servidorId = null, empresaId = null) {
         {% if not usuario_puede_editar %}
             // Solo mostrar la descripción sin permitir edición
-            alert("Descripción: " + (descripcionActual || "No hay comentarios"));
+            alert("Comentarios: " + (descripcionActual || "No hay comentarios"));
             return;
         {% endif %}
         
@@ -256,9 +276,84 @@
         estadoIdGlobal = estadoId;
         servidorIdGlobal = servidorId;
         empresaIdGlobal = empresaId;
-        document.getElementById("descripcionText").value = descripcionActual;
+        
+        // Limpiar el campo de nuevo comentario
+        document.getElementById("descripcionText").value = "";
+        
+        // Cargar comentarios existentes
+        cargarComentariosExistentes();
+        
         document.body.classList.add('modal-open');
         modal.style.display = "block";
+    }
+
+    function abrirModalFromButton(button) {
+        {% if not usuario_puede_editar %}
+            // Solo mostrar sin permitir edición
+            alert("No tiene permisos para modificar comentarios");
+            return;
+        {% endif %}
+        
+        const registroId = button.getAttribute('data-registro-id');
+        const fecha = button.getAttribute('data-fecha');
+        const estadoId = button.getAttribute('data-estado-id');
+        const servidorId = button.getAttribute('data-servidor-id');
+        const empresaId = button.getAttribute('data-empresa-id');
+        
+        abrirModal(registroId, fecha, estadoId, "", servidorId, empresaId);
+    }
+
+    function cargarComentariosExistentes() {
+        // Mostrar mensaje de carga
+        document.getElementById("listaComentarios").textContent = "Cargando comentarios...";
+        
+        let fechaISO = new Date(fechaGlobal).toISOString().split('T')[0];
+        fetch("/AppCrud/obtener_comentarios/", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-CSRFToken": getCookie("csrftoken") },
+            body: JSON.stringify({
+                registro_id: registroIdGlobal,
+                fecha: fechaISO,
+                servidor_id: servidorIdGlobal,
+                empresa_id: empresaIdGlobal
+            })
+        }).then(response => response.json()).then(data => {
+            if (data.success) {
+                const listaComentarios = document.getElementById("listaComentarios");
+                if (data.comentarios && data.comentarios.trim()) {
+                    listaComentarios.textContent = data.comentarios;
+                } else {
+                    listaComentarios.textContent = "No hay comentarios anteriores.";
+                }
+            } else {
+                document.getElementById("listaComentarios").textContent = "Error al cargar comentarios.";
+            }
+        }).catch(error => {
+            document.getElementById("listaComentarios").textContent = "Error de conexión al cargar comentarios.";
+        });
+    }
+
+    function actualizarBotonComentarioEnTabla() {
+        // Encontrar el botón de comentario correspondiente en la tabla
+        const botones = document.querySelectorAll('.descripcion-btn');
+        
+        botones.forEach(boton => {
+            // Verificar si es el botón correcto comparando los atributos data
+            const registroId = boton.getAttribute('data-registro-id');
+            const fecha = boton.getAttribute('data-fecha');
+            const servidorId = boton.getAttribute('data-servidor-id');
+            const empresaId = boton.getAttribute('data-empresa-id');
+            
+            if (registroId == registroIdGlobal && 
+                fecha == fechaGlobal && 
+                servidorId == servidorIdGlobal && 
+                empresaId == empresaIdGlobal) {
+                // Agregar la clase azul si no la tiene
+                if (!boton.classList.contains('descripcion-btn-azul')) {
+                    boton.classList.add('descripcion-btn-azul');
+                }
+            }
+        });
     }
 
     function cerrarModal() {
@@ -273,13 +368,18 @@
             return;
         {% endif %}
         
+        let descripcion = document.getElementById("descripcionText").value.trim();
+        if (!descripcion) {
+            alert("Por favor, escriba un comentario antes de guardar.");
+            return;
+        }
+        
         // Mostrar spinner de carga
         mostrarSpinner();
         
         // Guardar la posición de scroll antes de hacer la petición
         guardarPosicionScroll();
         
-        let descripcion = document.getElementById("descripcionText").value;
         let fechaISO = new Date(fechaGlobal).toISOString().split('T')[0];
         fetch("/AppCrud/registrarDescripcion/", {
             method: "POST",
@@ -293,16 +393,24 @@
             })
         }).then(response => response.json()).then(data => {
             if (data.success) {
-                alert("Descripción guardada correctamente.");
-                cerrarModal();
-                location.reload();
+                alert("Comentario agregado correctamente.");
+                // Limpiar el campo de nuevo comentario
+                document.getElementById("descripcionText").value = "";
+                // Recargar los comentarios para mostrar el nuevo
+                cargarComentariosExistentes();
+                // Actualizar el botón en la tabla para que se vea azul
+                actualizarBotonComentarioEnTabla();
+                // No cerrar el modal para permitir agregar más comentarios
+                // cerrarModal();
+                // location.reload();
+                ocultarSpinner();
             } else {
                 ocultarSpinner();
-                alert("Error al guardar la descripción.");
+                alert("Error al guardar el comentario: " + (data.error || "Error desconocido"));
             }
         }).catch(error => {
             ocultarSpinner();
-            alert("Error de conexión al guardar la descripción.");
+            alert("Error de conexión al guardar el comentario.");
         });
     }
 
@@ -603,14 +711,66 @@
 
     .modal-content {
         background-color: #fefefe;
-        margin: 15% auto;
+        margin: 5% auto;
         padding: 20px;
         border: 1px solid #888;
-        width: 50%;
+        width: 60%;
+        max-width: 800px;
+        min-width: 400px;
         border-radius: 8px;
         box-shadow: 0 4px 20px rgba(0,0,0,0.3);
         position: relative;
         z-index: 10001;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    /* Estilos para el área de comentarios existentes */
+    #comentariosExistentes {
+        background-color: #f9f9f9;
+        border: 1px solid #ddd;
+        padding: 15px;
+        margin-bottom: 15px;
+        border-radius: 5px;
+        max-height: 250px;
+        overflow-y: auto;
+    }
+
+    #comentariosExistentes h4 {
+        margin-top: 0;
+        margin-bottom: 10px;
+        color: #333;
+        font-size: 1.1em;
+    }
+
+    #listaComentarios {
+        white-space: pre-line;
+        font-family: 'Courier New', monospace;
+        font-size: 0.9em;
+        line-height: 1.4;
+        color: #555;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 3px;
+        border: 1px solid #e0e0e0;
+    }
+
+    /* Mejorar el estilo del textarea */
+    #descripcionText {
+        width: 100%;
+        min-height: 80px;
+        padding: 10px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        font-family: Arial, sans-serif;
+        font-size: 1em;
+        resize: vertical;
+    }
+
+    #descripcionText:focus {
+        outline: none;
+        border-color: #4CAF50;
+        box-shadow: 0 0 5px rgba(76, 175, 80, 0.3);
     }
 
     .close {
@@ -663,7 +823,7 @@
 
     .estado-select {
         width: 100%;
-        max-width: 140px;
+        max-width: 90px;
         padding: 4px 8px;
         border: 1px solid #ccc;
         border-radius: 4px;
