@@ -305,7 +305,7 @@ def registrarDescripcion(request):
                 empresa=empresa,
                 fecha=fecha_obj,
                 defaults={
-                    'tipo_verificacion': 'bien',
+                    'tipo_verificacion': 'no_verificado',
                     'comentarios': []
                 }
             )

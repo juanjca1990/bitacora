@@ -21,19 +21,7 @@ class JobForm(forms.Form):
         
         # Determinar la empresa actual y establecer su valor
         empresa_actual = None
-        if user and user.is_superuser:
-            # Si es superuser pero se especifica una empresa para filtrar (admin multi-empresa)
-            if empresa_filtro:
-                empresa_actual = empresa_filtro
-            else:
-                # Si es superuser sin filtro específico, no mostrar ninguna empresa por defecto
-                self.fields['empresa'].initial = ""
-        elif user and user.empresa:
-            # Usuario normal con empresa asignada
-            empresa_actual = user.empresa
-        elif empresa_filtro:
-            # Usuario admin multi-empresa con empresa específica seleccionada
-            empresa_actual = empresa_filtro
+        empresa_actual = empresa_filtro
         
         # Establecer el valor de la empresa en el campo deshabilitado
         if empresa_actual:
@@ -86,19 +74,7 @@ class ContactoForm(forms.Form):
         
         # Determinar la empresa actual y establecer su valor
         empresa_actual = None
-        if user and user.is_superuser:
-            # Si es superuser pero se especifica una empresa para filtrar (admin multi-empresa)
-            if empresa_filtro:
-                empresa_actual = empresa_filtro
-            else:
-                # Si es superuser sin filtro específico, no mostrar ninguna empresa por defecto
-                self.fields['empresa'].initial = ""
-        elif user and user.empresa:
-            # Usuario normal con empresa asignada
-            empresa_actual = user.empresa
-        elif empresa_filtro:
-            # Usuario admin multi-empresa con empresa específica seleccionada
-            empresa_actual = empresa_filtro
+        empresa_actual = empresa_filtro
         
         # Establecer el valor de la empresa en el campo deshabilitado
         if empresa_actual:
@@ -141,21 +117,9 @@ class AvisoForm(forms.Form):
         
         # Determinar la empresa actual y establecer su valor
         empresa_actual = None
-        if user and user.is_superuser:
-            # Si es superuser pero se especifica una empresa para filtrar (admin multi-empresa)
-            if empresa_filtro:
-                empresa_actual = empresa_filtro
-            else:
-                # Si es superuser sin filtro específico, no mostrar ninguna empresa por defecto
-                self.fields['empresa'].initial = ""
-        elif user and user.empresa:
-            # Usuario normal con empresa asignada
-            empresa_actual = user.empresa
-        elif empresa_filtro:
-            # Usuario admin multi-empresa con empresa específica seleccionada
-            empresa_actual = empresa_filtro
+        empresa_actual = empresa_filtro
         
-        # Establecer el valor de la empresa en el campo deshabilitado
+        # busca jobs y contactos de la empresa actual
         if empresa_actual:
             self.fields['empresa'].initial = empresa_actual.nombre
             # Guardar la empresa actual para uso posterior en el procesamiento del formulario
