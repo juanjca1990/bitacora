@@ -40,7 +40,8 @@ class Estado(models.Model):
         ('pendiente', 'Verificación Pendiente'),
     ]
     tipo_verificacion = models.CharField(max_length=20, choices=OPCIONES_VERIFICACION, default='none')
-    descripcion = models.TextField(blank=True, null=True)
+    descripcion = models.TextField(blank=True, null=True)  # Mantener para compatibilidad
+    comentarios = models.JSONField(default=list, blank=True)  # Nuevo campo para comentarios con timestamp
     registro_verificado = models.ForeignKey(Registro, on_delete=models.CASCADE, related_name="estados")
     fecha = models.DateField(default=now)
     servidor = models.ForeignKey(Servidor, on_delete=models.CASCADE, related_name="estados")
@@ -50,6 +51,56 @@ class Estado(models.Model):
 
     def __str__(self):
         return f"{self.registro_verificado.nombre} - {self.tipo_verificacion} - {self.fecha}"
+    
+    def agregar_comentario(self, comentario, usuario):
+        """Agrega un nuevo comentario con timestamp"""
+        from django.utils import timezone
+        nuevo_comentario = {
+            'texto': comentario,
+            'timestamp': timezone.now().isoformat(),
+            'usuario': usuario.username if usuario else 'Sistema'
+        }
+        self.comentarios.append(nuevo_comentario)
+        self.save()
+    
+    def tiene_comentarios(self):
+        """Verifica si el estado tiene comentarios (incluyendo descripción antigua)"""
+        return bool(self.comentarios) or bool(self.descripcion)
+    
+    def obtener_comentarios_formateados(self):
+        """Retorna los comentarios formateados para mostrar"""
+        if not self.comentarios:
+            return ""
+        
+        comentarios_texto = []
+        for comentario in self.comentarios:
+            timestamp = comentario.get('timestamp', '')
+            usuario = comentario.get('usuario', 'Usuario')
+            texto = comentario.get('texto', '')
+            if timestamp:
+                from django.utils.dateparse import parse_datetime
+                dt = parse_datetime(timestamp)
+                if dt:
+                    fecha_formateada = dt.strftime('%d/%m/%Y %H:%M')
+                    comentarios_texto.append(f"[{fecha_formateada} - {usuario}]: {texto}")
+                else:
+                    comentarios_texto.append(f"[{usuario}]: {texto}")
+            else:
+                comentarios_texto.append(f"[{usuario}]: {texto}")
+        
+        return "\n".join(comentarios_texto)
+    
+    def migrar_descripcion_a_comentarios(self):
+        """Migra la descripción existente al nuevo formato de comentarios"""
+        if self.descripcion and not self.comentarios:
+            from django.utils import timezone
+            comentario_migrado = {
+                'texto': self.descripcion,
+                'timestamp': timezone.now().isoformat(),
+                'usuario': 'Sistema (migrado)'
+            }
+            self.comentarios = [comentario_migrado]
+            self.save()
 
 class User(AbstractUser):
     empresa = models.ForeignKey(Empresa, on_delete=models.CASCADE, null=True, blank=True)  # Permitir nulos (mantener para compatibilidad)

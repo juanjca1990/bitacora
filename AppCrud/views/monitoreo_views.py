@@ -305,19 +305,87 @@ def registrarDescripcion(request):
                 empresa=empresa,
                 fecha=fecha_obj,
                 defaults={
-                    'tipo_verificacion': 'exito',
-                    'descripcion': descripcion
+                    'tipo_verificacion': 'bien',
+                    'comentarios': []
                 }
             )
 
-            if not created:
-                estado.descripcion = descripcion
-                estado.save()
+            # Si el estado tiene descripción antigua, migrarla primero
+            if estado.descripcion and not estado.comentarios:
+                estado.migrar_descripcion_a_comentarios()
 
-            return JsonResponse({"success": True})
+            # Agregar el nuevo comentario
+            if descripcion.strip():  # Solo agregar si no está vacío
+                estado.agregar_comentario(descripcion.strip(), usuario)
+
+            # Retornar los comentarios formateados para actualizar la interfaz
+            comentarios_formateados = estado.obtener_comentarios_formateados()
+            
+            return JsonResponse({
+                "success": True, 
+                "comentarios": comentarios_formateados,
+                "comentarios_raw": estado.comentarios
+            })
 
         except Exception as e:
             print(f"Error en registrarDescripcion: {e}")
+            return JsonResponse({"success": False, "error": str(e)})
+
+    return JsonResponse({"success": False, "error": "Método no permitido"})
+
+@csrf_exempt
+@login_required
+def obtener_comentarios(request):
+    """Vista para obtener los comentarios existentes de un estado"""
+    if request.method == "POST":
+        try:
+            data = json.loads(request.body)
+            registro_id = data.get("registro_id")
+            fecha = data.get("fecha")
+            servidor_id = data.get("servidor_id")
+            empresa_id = data.get("empresa_id")
+
+            # Obtener objetos
+            registro = Registro.objects.get(id=registro_id)
+            servidor = Servidor.objects.get(id=servidor_id)
+            empresa = Empresa.objects.get(id=empresa_id)
+            fecha_obj = datetime.strptime(fecha, "%Y-%m-%d").date()
+            
+            # Verificar permisos
+            usuario = request.user
+            if not (usuario.is_superuser or usuario.es_admin_empresa(empresa)):
+                return JsonResponse({"success": False, "error": "No tiene permisos para ver comentarios de esta empresa"})
+
+            # Buscar el estado
+            try:
+                estado = Estado.objects.get(
+                    registro_verificado=registro,
+                    servidor=servidor,
+                    empresa=empresa,
+                    fecha=fecha_obj
+                )
+                
+                # Si tiene descripción antigua, migrarla
+                if estado.descripcion and not estado.comentarios:
+                    estado.migrar_descripcion_a_comentarios()
+                
+                comentarios_formateados = estado.obtener_comentarios_formateados()
+                
+                return JsonResponse({
+                    "success": True, 
+                    "comentarios": comentarios_formateados,
+                    "comentarios_raw": estado.comentarios
+                })
+                
+            except Estado.DoesNotExist:
+                return JsonResponse({
+                    "success": True, 
+                    "comentarios": "",
+                    "comentarios_raw": []
+                })
+
+        except Exception as e:
+            print(f"Error en obtener_comentarios: {e}")
             return JsonResponse({"success": False, "error": str(e)})
 
     return JsonResponse({"success": False, "error": "Método no permitido"})

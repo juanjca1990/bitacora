@@ -78,6 +78,7 @@ urlpatterns = [
     path('obtener_fecha/', obtener_fecha, name='obtener_fecha'),
     path('registrarEstado/', registrarEstado, name='registrarEstado'),
     path('registrarDescripcion/', registrarDescripcion, name='registrarDescripcion'),
+    path('obtener_comentarios/', obtener_comentarios, name='obtener_comentarios'),
     path('imprimirRegistroMes/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMes, name="imprimirRegistroMes"),
     path('cambiarSemanaMonitor/',cambiarSemanaMonitor, name='cambiarSemanaMonitor'),
     path('cambiarMesMonitor/',cambiarMesMonitor,name='cambiarMesMonitor'),
