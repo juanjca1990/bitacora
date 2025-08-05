@@ -384,3 +384,95 @@ def register_user_vista_admin(request, empresa_id):
             "tipo": "Usuario", 
             "empresa": empresa
         })
+
+@login_required
+@permission_required('AppCrud.change_user', raise_exception=True)
+def editar_usuario(request, user_id):
+    """Vista para editar un usuario existente"""
+    User = get_user_model()
+    usuario_a_editar = get_object_or_404(User, id=user_id)
+    
+    # Verificar que el usuario actual tenga permisos para editar este usuario
+    if not request.user.is_superuser:
+        # Si no es superusuario, verificar que sea admin de la empresa del usuario
+        if usuario_a_editar.empresa and not request.user.es_admin_empresa(usuario_a_editar.empresa):
+            messages.error(request, "No tienes permisos para editar este usuario.")
+            return redirect('usuarios')
+    
+    if request.method == "POST":
+        form = RegistroUsuarioAdminEditForm(request.POST, instance=usuario_a_editar)
+        if form.is_valid():
+            user = form.save(commit=False)
+            
+            # Si se cambió la empresa, actualizar los grupos
+            empresa_anterior = usuario_a_editar.empresa
+            nueva_empresa = form.cleaned_data.get('empresa')
+            
+            if empresa_anterior != nueva_empresa:
+                # Remover del grupo anterior si existe
+                if empresa_anterior:
+                    try:
+                        grupo_anterior = Group.objects.get(name=empresa_anterior.nombre)
+                        user.groups.remove(grupo_anterior)
+                    except Group.DoesNotExist:
+                        pass
+                
+                # Agregar al nuevo grupo si existe
+                if nueva_empresa:
+                    try:
+                        nuevo_grupo = Group.objects.get(name=nueva_empresa.nombre)
+                        user.groups.add(nuevo_grupo)
+                    except Group.DoesNotExist:
+                        pass
+            
+            user.save()
+            messages.success(request, f"Usuario {user.username} editado correctamente.")
+            return redirect('usuarios')
+        else:
+            messages.error(request, "Error al editar el usuario.")
+    else:
+        form = RegistroUsuarioAdminEditForm(instance=usuario_a_editar)
+    
+    return render(request, "AppCrud/editarUsuario.html", {
+        "form": form,
+        "usuario_a_editar": usuario_a_editar
+    })
+
+@login_required
+@permission_required('AppCrud.delete_user', raise_exception=True)
+def eliminar_usuario(request, user_id):
+    """Vista para eliminar un usuario"""
+    User = get_user_model()
+    usuario_a_eliminar = get_object_or_404(User, id=user_id)
+    
+    # Verificar que el usuario actual tenga permisos para eliminar este usuario
+    if not request.user.is_superuser:
+        # No permitir que se elimine a sí mismo
+        if usuario_a_eliminar == request.user:
+            messages.error(request, "No puedes eliminarte a ti mismo.")
+            return redirect('usuarios')
+        
+        # Si no es superusuario, verificar que sea admin de la empresa del usuario
+        if usuario_a_eliminar.empresa and not request.user.es_admin_empresa(usuario_a_eliminar.empresa):
+            messages.error(request, "No tienes permisos para eliminar este usuario.")
+            return redirect('usuarios')
+    
+    # No permitir eliminar superusuarios
+    if usuario_a_eliminar.is_superuser:
+        messages.error(request, "No se puede eliminar un superusuario.")
+        return redirect('usuarios')
+    
+    # No permitir eliminar administradores de empresas
+    if usuario_a_eliminar.empresas_administradas.exists():
+        messages.error(request, "No se puede eliminar un administrador de empresas. Primero remueve sus permisos de administrador.")
+        return redirect('usuarios')
+    
+    if request.method == "POST":
+        username = usuario_a_eliminar.username
+        usuario_a_eliminar.delete()
+        messages.success(request, f"Usuario {username} eliminado correctamente.")
+        return redirect('usuarios')
+    
+    return render(request, "AppCrud/eliminarUsuario.html", {
+        "usuario_a_eliminar": usuario_a_eliminar
+    })

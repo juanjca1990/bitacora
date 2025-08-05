@@ -285,4 +285,40 @@ class AsignarAdminForm(forms.Form):
             raise forms.ValidationError("Debe seleccionar al menos una empresa.")
         return empresas
 
+class RegistroUsuarioAdminEditForm(forms.ModelForm):
+    """Formulario para que los administradores editen usuarios"""
+    email = forms.EmailField(
+        label="Email", 
+        widget=forms.EmailInput(attrs={'class': 'form-control'})
+    )
+    empresa = forms.ModelChoiceField(
+        queryset=Empresa.objects.all(),
+        label="Empresa",
+        widget=forms.Select(attrs={'class': 'form-control'}),
+        required=False
+    )
+    first_name = forms.CharField(
+        label='Nombre', 
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=False
+    )
+    last_name = forms.CharField(
+        label='Apellido', 
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        required=False
+    )
+    is_active = forms.BooleanField(
+        label='Usuario activo',
+        required=False,
+        widget=forms.CheckboxInput(attrs={'class': 'form-check-input'})
+    )
+
+    class Meta:
+        model = User
+        fields = ["username", "email", "first_name", "last_name", "empresa", "is_active"]
+        widgets = {
+            'username': forms.TextInput(attrs={'class': 'form-control'}),
+        }
+        help_texts = {k: "" for k in fields}
+
 
