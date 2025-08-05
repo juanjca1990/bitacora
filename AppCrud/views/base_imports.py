@@ -29,4 +29,4 @@ from reportlab.lib import colors
 from AppCrud.models import Estado, Job, Contacto, Aviso, Bitacora, Empresa, Registro, Servidor, User, VisualEmpresa
 from AppCrud.forms import (JobForm, EmailForm, ContactoForm, AvisoForm, BitacoraForm, 
                            RegistroForm, RegistroUsuarioForm, ServidorForm, UserEditForm, 
-                           EmpresaVisualForm, AsignarAdminForm)
+                           EmpresaVisualForm, AsignarAdminForm, RegistroUsuarioAdminEditForm)

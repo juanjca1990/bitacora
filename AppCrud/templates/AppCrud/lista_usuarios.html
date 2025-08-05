@@ -2,87 +2,162 @@
 {% block title %}Usuarios{% endblock %}
 {% block bloque %}
 <div class="container mt-5">
-    <h1 class="text-center">Lista de Usuarios</h1>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="text-center">Lista de Usuarios</h1>
+        {% if perms.AppCrud.add_user %}
+            <a href="{% url 'Register' %}" class="btn btn-corporativo">
+                <i class="fas fa-plus me-1"></i>
+                Agregar Usuario
+            </a>
+        {% endif %}
+    </div>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
 
     <!-- Buscador -->
     <form method="get" class="mb-3 d-flex">
         <input type="text" name="q_usuarios" class="form-control me-2" placeholder="Buscar por nombre o email" value="{{ request.GET.q_usuarios|default:'' }}">
-        <button type="submit" class="btn btn-corporativo">Buscar</button>
+        <button type="submit" class="btn btn-corporativo">
+            <i class="fas fa-search me-1"></i>
+            Buscar
+        </button>
     </form>
 
-    <table class="table table-bordered table-striped table-corporativa mt-3">
-        <thead class="bg-light">
-            <tr>
-                <th>Usuario</th>
-                <th>Email</th>
-                <th>Empresa</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for user in usuarios %}
-            <tr>
-                <td>{{ user.username }}</td>
-                <td>{{ user.email }}</td>
-                <td>
-                    {% if user.empresa %}
-                        {{ user.empresa.nombre }}
-                    {% else %}
-                        Sin empresa
+    <div class="table-responsive">
+        <table class="table table-bordered table-striped table-corporativa mt-3">
+            <thead class="bg-light">
+                <tr>
+                    <th>Usuario</th>
+                    <th>Email</th>
+                    {% if perms.AppCrud.change_user or perms.AppCrud.delete_user %}
+                        <th>Acciones</th>
                     {% endif %}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in usuarios %}
+                <tr>
+                    <td>
+                        <i class="fas fa-user me-1"></i>
+                        {{ user.username }}
+                    </td>
+                    <td>{{ user.email|default:"No especificado" }}</td>
+                   
+                    {% if perms.AppCrud.change_user or perms.AppCrud.delete_user %}
+                        <td>
+                            <div class="btn-group" role="group" aria-label="Acciones del usuario">
+                                {% if perms.AppCrud.change_user %}
+                                    <a href="{% url 'editar_usuario' user.id %}" 
+                                       class="btn btn-sm btn-outline-primary" 
+                                       title="Editar usuario">
+                                        <i class="fas fa-edit">editar</i>
+                                    </a>
+                                {% endif %}
+                                {% if perms.AppCrud.delete_user and not user.is_superuser and not user.empresas_administradas.exists %}
+                                    <a href="{% url 'eliminar_usuario' user.id %}" 
+                                       class="btn btn-sm btn-outline-danger" 
+                                       title="Eliminar usuario">
+                                        <i class="fas fa-trash">eliminar</i>
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    {% endif %}
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="{% if perms.AppCrud.change_user or perms.AppCrud.delete_user %}6{% else %}5{% endif %}" class="text-center">
+                        <i class="fas fa-users me-2"></i>
+                        No se encontraron usuarios.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
     <!-- Paginación -->
-    <nav>
-        <ul class="pagination justify-content-center">
-            {% if usuarios.has_previous %}
-                <li class="page-item">
-                    <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page=1">&laquo;</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page={{ usuarios.previous_page_number }}">&lsaquo;</a>
-                </li>
-            {% endif %}
-            {% for num in usuarios.paginator.page_range %}
-                {% if usuarios.number == num %}
-                    <li class="page-item active"><span class="page-link">{{ num }}</span></li>
-                {% elif num > usuarios.number|add:'-3' and num < usuarios.number|add:'3' %}
-                    <li class="page-item"><a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page={{ num }}">{{ num }}</a></li>
+    {% if usuarios.paginator.num_pages > 1 %}
+        <nav aria-label="Paginación de usuarios">
+            <ul class="pagination justify-content-center">
+                {% if usuarios.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page=1" aria-label="Primera página">
+                            <i class="fas fa-angle-double-left"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page={{ usuarios.previous_page_number }}" aria-label="Página anterior">
+                            <i class="fas fa-angle-left"></i>
+                        </a>
+                    </li>
                 {% endif %}
-            {% endfor %}
-            {% if usuarios.has_next %}
-                <li class="page-item">
-                    <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page={{ usuarios.next_page_number }}">&rsaquo;</a>
-                </li>
-                <li class="page-item">
-                    <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page={{ usuarios.paginator.num_pages }}">&raquo;</a>
-                </li>
-            {% endif %}
-        </ul>
-    </nav>
+                
+                {% for num in usuarios.paginator.page_range %}
+                    {% if usuarios.number == num %}
+                        <li class="page-item active">
+                            <span class="page-link">{{ num }}</span>
+                        </li>
+                    {% elif num > usuarios.number|add:'-3' and num < usuarios.number|add:'3' %}
+                        <li class="page-item">
+                            <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page={{ num }}">{{ num }}</a>
+                        </li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if usuarios.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page={{ usuarios.next_page_number }}" aria-label="Página siguiente">
+                            <i class="fas fa-angle-right"></i>
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?q_usuarios={{ request.GET.q_usuarios }}&usuarios_page={{ usuarios.paginator.num_pages }}" aria-label="Última página">
+                            <i class="fas fa-angle-double-right"></i>
+                        </a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
 </div>
 
 <style>
-        /* Estilos corporativos para tablas */
-        .table-corporativa thead th {
-            background-color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
-            color: {{ empresa_actual.visual_empresa.colorSecundario }} !important;
-            border: none !important;
-        }
-        
-        .table-corporativa tbody tr:nth-child(odd) {
-            background-color: #f8f9fa !important;
-        }
-        
-        .table-corporativa tbody tr:nth-child(even) {
-            background-color: white !important;
-        }
-        
-        .table-corporativa tbody tr:hover {
-            background-color: #e9ecef !important;
-        }
-    </style>
+    /* Estilos corporativos para tablas */
+    .table-corporativa thead th {
+        background-color: {{ empresa_actual.visual_empresa.colorPrimario|default:'#007bff' }} !important;
+        color: white !important;
+        border: none !important;
+    }
+    
+    .table-corporativa tbody tr:nth-child(odd) {
+        background-color: #f8f9fa !important;
+    }
+    
+    .table-corporativa tbody tr:nth-child(even) {
+        background-color: white !important;
+    }
+    
+    .table-corporativa tbody tr:hover {
+        background-color: #e9ecef !important;
+    }
+    
+    .btn-corporativo {
+        background-color: {{ empresa_actual.visual_empresa.colorPrimario|default:'#007bff' }} !important;
+        border-color: {{ empresa_actual.visual_empresa.colorPrimario|default:'#007bff' }} !important;
+        color: white !important;
+    }
+    
+    .btn-corporativo:hover {
+        background-color: {{ empresa_actual.visual_empresa.colorSecundario|default:'#0056b3' }} !important;
+        border-color: {{ empresa_actual.visual_empresa.colorSecundario|default:'#0056b3' }} !important;
+    }
+</style>
 {% endblock %}
