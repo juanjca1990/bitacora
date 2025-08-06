@@ -23,7 +23,7 @@
         <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
         
         <link rel="stylesheet" href="{% static 'admin/css/style.css' %}">
-        
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
 </head>
 <body>
     <nav class="navbar navbar-expand-lg">
@@ -207,6 +207,20 @@
            
         </div>
     </footer>
+
+    <!-- Botón flotante de ayuda con ícono de robot -->
+    <div id="help-float-btn" onclick="abrirChatAyuda()" title="¿Necesitas ayuda?">
+        <i class="fa-solid fa-comments"></i>
+    </div>
+
+    <script>
+    function abrirChatAyuda() {
+        document.body.classList.add('fade-out');
+        setTimeout(function() {
+            window.location.href = "{% url 'chat' %}";
+        }, 500); // El tiempo debe coincidir con el de la transición CSS
+    }
+    </script>
 </body>
     <style>
         /* Variables CSS para usar en el archivo externo */
@@ -286,6 +300,37 @@
         color: #1a1a1a;
         }
 
+        /* Estilo para el botón flotante de ayuda */
+        #help-float-btn {
+            position: fixed;
+            right: 24px; /* Cambiado a la derecha */
+            bottom: 32px;
+            z-index: 9999;
+            background: linear-gradient(135deg, #00c3ff 0%, #3a7bd5 100%);
+            color: #fff;
+            border-radius: 50%;
+            width: 64px;
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 16px #0002;
+            font-size: 2.3rem;
+            cursor: pointer;
+            transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
+            border: 2px solid #fff;
+        }
+        #help-float-btn:hover {
+            background: linear-gradient(135deg, #3a7bd5 0%, #00c3ff 100%);
+            box-shadow: 0 8px 24px #0003;
+            transform: scale(1.08);
+        }
+
+        .fade-out {
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            pointer-events: none;
+        }
     </style>
 </html>
 

@@ -19,6 +19,11 @@
             height: 100vh;
             width: 100vw;
             box-sizing: border-box;
+            opacity: 0;
+            transition: opacity 0.6s ease;
+        }
+        body.fade-in {
+            opacity: 1;
         }
         #chat-box {
             position: fixed;
@@ -156,7 +161,7 @@
     <div id="chat-box">
         <div id="header">
             <img id="logo" src="{% static 'chat/logoexerom.png' %}" alt="Logo empresa" />
-            <h2>Chat Exerom Assistant</h2>
+            <h2>Exerom Chat Assistant</h2>
             <div style="font-size:1rem;opacity:.85;">www.exerom.com</div>
         </div>
         <div id="messages"></div>
@@ -214,6 +219,10 @@
                 e.preventDefault();
                 sendBtn.onclick();
             }
+        });
+
+        window.addEventListener('DOMContentLoaded', function() {
+            document.body.classList.add('fade-in');
         });
     </script>
 </body>
