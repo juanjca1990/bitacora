@@ -144,10 +144,15 @@ def editarAdminMultiEmpresa(request, admin_id):
     admin_usuario = get_object_or_404(User, id=admin_id)
     
     if request.method == "POST":
-        form = AsignarAdminForm(request.POST, initial={'usuario': admin_usuario})
-        # Hacer que el campo usuario esté oculto ya que estamos editando
-        form.fields['usuario'].widget = forms.HiddenInput()
-        form.fields['usuario'].initial = admin_usuario
+        form = AsignarAdminForm(request.POST)
+        
+        # Forzar el usuario en el formulario después de la validación inicial
+        form.data = form.data.copy()
+        form.data['usuario'] = admin_usuario.id
+        
+        # Re-bind el formulario con el usuario correcto
+        form = AsignarAdminForm(form.data)
+        form.fields['usuario'].queryset = User.objects.filter(id=admin_usuario.id)
         
         if form.is_valid():
             empresas = form.cleaned_data["empresas"]
@@ -195,11 +200,16 @@ def editarAdminMultiEmpresa(request, admin_id):
                 # Asignar el grupo de admin al usuario
                 admin_usuario.groups.add(group_admin)
 
-            empresas_nombres = ", ".join([empresa.nombre for empresa in empresas])
-            messages.success(request, f"Usuario {admin_usuario.username} ahora administra: {empresas_nombres}")
+            if empresas:
+                empresas_nombres = ", ".join([empresa.nombre for empresa in empresas])
+                messages.success(request, f"Usuario {admin_usuario.username} ahora administra: {empresas_nombres}")
+            else:
+                messages.success(request, f"Se removieron todos los permisos de administrador del usuario {admin_usuario.username}")
+            
             return redirect('listaAdministradoresMultiEmpresa')
         else:
             messages.error(request, "Error al actualizar las empresas administradas")
+            print("Errores del formulario:", form.errors)
     else:
         # Preseleccionar las empresas que ya administra
         empresas_actuales = admin_usuario.empresas_administradas.all()
@@ -207,8 +217,14 @@ def editarAdminMultiEmpresa(request, admin_id):
             'usuario': admin_usuario,
             'empresas': empresas_actuales
         })
-        # Hacer que el campo usuario esté oculto
-        form.fields['usuario'].widget = forms.HiddenInput()
+        
+        # Limitar el queryset del campo usuario solo a este usuario
+        form.fields['usuario'].queryset = User.objects.filter(id=admin_usuario.id)
+    
+    # Hacer que el campo usuario esté oculto y configurar el queryset
+    form.fields['usuario'].widget = forms.HiddenInput()
+    form.fields['usuario'].initial = admin_usuario
+    form.fields['usuario'].queryset = User.objects.filter(id=admin_usuario.id)
     
     return render(request, "AppCrud/editarAdminMultiEmpresa.html", {
         "form": form,

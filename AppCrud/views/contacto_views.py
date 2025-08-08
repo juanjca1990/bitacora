@@ -105,7 +105,15 @@ def contactoForm(request):
 def editarContacto(request, id):
     contacto = Contacto.objects.get(id=id)
     usuario = request.user
-    if (not usuario.empresa == contacto.empresa) and not usuario.is_superuser:
+    
+    # Verificar permisos: superusuario, admin de la empresa del contacto, o mismo usuario de empresa
+    tiene_permisos = (
+        usuario.is_superuser or
+        (hasattr(usuario, 'empresas_administradas') and contacto.empresa in usuario.empresas_administradas.all()) or
+        (usuario.empresa == contacto.empresa)
+    )
+    
+    if not tiene_permisos:
         raise PermissionDenied("No tiene permisos para editar este contacto.")
     
     # Determinar la empresa para filtrar (usar la empresa del contacto existente)
