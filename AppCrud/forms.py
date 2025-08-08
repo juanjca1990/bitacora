@@ -174,33 +174,33 @@ class BitacoraForm(forms.Form):
     )
 
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)  # retrieve the user from kwargs
-        empresa_filtro = kwargs.pop('empresa_filtro', None)  # retrieve empresa_filtro from kwargs
+        user = kwargs.pop('user', None)
+        empresa_filtro = kwargs.pop('empresa_filtro', None)
         super(BitacoraForm, self).__init__(*args, **kwargs)
         
-        if user and user.is_superuser:
-            # Si es superuser pero se especifica una empresa para filtrar (admin multi-empresa)
-            if empresa_filtro:
-                self.fields['job'].queryset = Job.objects.filter(empresa=empresa_filtro)
-            else:
-                self.fields['job'].queryset = Job.objects.all()
-        elif user and user.empresa:
-            # Usuario normal con empresa asignada
-            user_empresa = user.empresa
-            self.fields['job'].queryset = Job.objects.filter(empresa=user_empresa)
-        elif empresa_filtro:
-            # Usuario admin multi-empresa con empresa específica seleccionada
-            self.fields['job'].queryset = Job.objects.filter(empresa=empresa_filtro)
+        # Determinar la empresa actual basándose en la lógica de empresa_filtro
+        empresa_actual = None
+        
+        if empresa_filtro:
+            # Si se pasa empresa_filtro explícitamente, usarla
+            empresa_actual = empresa_filtro
+        elif user:
+            # Si no hay empresa_filtro, usar la empresa del usuario
+            empresa_actual = user.empresa
+        
+        # Filtrar jobs según la empresa actual
+        if empresa_actual:
+            self.fields['job'].queryset = Job.objects.filter(empresa=empresa_actual)
         else:
-            # Sin empresa definida, no mostrar jobs
+            # Si no se puede determinar la empresa, no mostrar jobs
             self.fields['job'].queryset = Job.objects.none()
-        periodo_value = self.initial.get('periodo', '')  # Get the initial value of 'periodo' field
+            
+        periodo_value = self.initial.get('periodo', '')
         periodo_choices = [choice[0] for choice in self.fields['periodo'].choices]
         if periodo_value not in periodo_choices:
             self.initial['other_periodo'] = periodo_value
-            
             self.initial['periodo'] = periodo_value
-            self.fields['other_periodo'].widget.attrs['disabled'] = False  # Enable 'other_periodo' field
+            self.fields['other_periodo'].widget.attrs['disabled'] = False
             
 
 
