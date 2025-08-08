@@ -1,5 +1,10 @@
 from AppCrud.models import Estado, Registro, Servidor, Empresa
 from datetime import datetime
+import os
+from dotenv import load_dotenv
+from paramiko import SSHClient, AutoAddPolicy
+import psycopg2
+from psycopg2.extras import RealDictCursor
 
 def registrar_estado_tool(registro_id: int, fecha: str, tipo_verificacion: str, servidor_id: int, empresa_id: int) -> str:
     """
@@ -133,6 +138,81 @@ def list_estados() -> str:
         resultado += f"- {estado.id}: {estado.tipo_verificacion} (Registro: {estado.registro_verificado_id}, Servidor: {estado.servidor_id}, Empresa: {estado.empresa_id}, Fecha: {estado.fecha})\n"
     return resultado
 
+def consultar_estado_servidor(server_id: int) -> dict:
+    """
+    Consulta el estado de un servidor remoto (RAM, CPU, almacenamiento, uptime, carga, red, procesos).
+    """
+    if not isinstance(server_id, int):
+        return {"error": "El parámetro server_id debe ser un entero."}
+    load_dotenv()
+    server_host = os.getenv(f"SERVER_{server_id}_HOST")
+    server_user = os.getenv(f"SERVER_{server_id}_USER")
+    server_password = os.getenv(f"SERVER_{server_id}_PASSWORD")
+    if not server_host or not server_user or not server_password:
+        return {"error": "Credenciales del servidor no encontradas."}
+    try:
+        client = SSHClient()
+        client.set_missing_host_key_policy(AutoAddPolicy())
+        client.connect(server_host, username=server_user, password=server_password)
+        # Un solo bloque de comandos para obtener todo el reporte
+        commands = '''
+        echo 'CPU:'; top -bn1 | grep 'Cpu(s)' | awk '{print $2 + $4}';
+        echo 'RAM:'; free -m | awk 'NR==2{printf "Uso: %.2f%%", $3*100/$2 }';
+        echo 'DISK:'; df -h / | awk 'NR==2{printf "Uso: %s", $5}';
+        echo 'UPTIME:'; uptime -p;
+        '''
+        stdin, stdout, stderr = client.exec_command(commands)
+        output = stdout.read().decode().strip()
+        client.close()
+        return {"report": output}
+    except Exception as e:
+        return {"error": str(e)}
+
+def consultar_base_datos(server_id: int, database: str) -> dict:
+    """
+    Consulta solo la versión de PostgreSQL en un servidor específico.
+
+    Parámetros:
+        server_id (int): ID del servidor PostgreSQL.
+        database (str): Nombre de la base de datos a consultar.
+
+    Retorna:
+        dict: Versión de PostgreSQL o un mensaje de error.
+    """
+    if not isinstance(server_id, int):
+        return {"error": "El parámetro server_id debe ser un entero."}
+
+    load_dotenv()
+
+    # Cargar credenciales del servidor desde el archivo .env
+    server_host = os.getenv(f"POSTGRES_{server_id}_HOST")
+    server_user = os.getenv(f"POSTGRES_{server_id}_USER")
+    server_password = os.getenv(f"POSTGRES_{server_id}_PASSWORD")
+
+    if not server_host or not server_user or not server_password:
+        return {"error": "Credenciales del servidor no encontradas."}
+
+    try:
+        # Conexión a la base de datos PostgreSQL
+        connection = psycopg2.connect(
+            host=server_host,
+            user=server_user,
+            password=server_password,
+            database=database
+        )
+        cursor = connection.cursor()
+
+        # Consultar versión de PostgreSQL
+        cursor.execute("SELECT version();")
+        postgres_version = cursor.fetchone()
+
+        connection.close()
+
+        return {"postgres_version": postgres_version[0]}
+
+    except Exception as e:
+        return {"error": str(e)}
+
 def get_tools():
     """
     Obtiene las herramientas disponibles para el modelo.
@@ -147,5 +227,7 @@ def get_tools():
         list_servidores,
         list_registros,
         list_estados,
-        registrar_estado_tool
+        registrar_estado_tool,
+        consultar_estado_servidor,
+        consultar_base_datos
     ]

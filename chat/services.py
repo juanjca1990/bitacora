@@ -54,6 +54,7 @@ def process_message(data):
     'registrar transaccion AN78 que se encarga de generar los repartos de abastecimiento'
     deberia registrar transaccion "AN78" y de descripcion "encargada de generar los repartos de abastecimiento".
     - No incluir razonamiento en la respuesta, solo muy basico y referido a los datos
+    - si pregunta sobre estado de un servidor puntutal o sobre una base de datos si retornar un mensaje que de un razonamiento y haga un reporte tecnico/funcional
     """
     user_message = f"{reglas}\n{user_message}"
     provider = data.get('provider', 'gemini')
