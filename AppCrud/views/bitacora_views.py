@@ -137,8 +137,17 @@ def bitacoraForm(request, other_periodo=None):
 def editarBitacora(request, id):
     bitacora = Bitacora.objects.get(id=id)
     usuario = request.user
-    if (not usuario.empresa == bitacora.empresa) and not usuario.is_superuser:
-        raise PermissionDenied("You do not have permission to access this page.")
+    
+    # Verificar permisos: superuser, empresa propia, o empresa administrada
+    tiene_permisos = (
+        usuario.is_superuser or 
+        usuario.empresa == bitacora.empresa or
+        (hasattr(usuario, 'empresas_administradas') and 
+         usuario.empresas_administradas.filter(id=bitacora.empresa.id).exists())
+    )
+    
+    if not tiene_permisos:
+        raise PermissionDenied("No tiene permisos para editar esta bitácora.")
     
     # Determinar la empresa para filtrar jobs (usar la empresa de la bitácora existente)
     empresa_para_filtrar = bitacora.empresa

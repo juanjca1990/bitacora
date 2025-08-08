@@ -150,7 +150,16 @@ def jobForm(request):
 def editarJob(request, id):
     job = Job.objects.get(id=id)
     usuario = request.user
-    if (not usuario.empresa == job.empresa) and not usuario.is_superuser:
+    
+    # Verificar permisos: superuser, empresa propia, o empresa administrada
+    tiene_permisos = (
+        usuario.is_superuser or 
+        usuario.empresa == job.empresa or
+        (hasattr(usuario, 'empresas_administradas') and 
+         usuario.empresas_administradas.filter(id=job.empresa.id).exists())
+    )
+    
+    if not tiene_permisos:
         raise PermissionDenied("No tiene permisos para editar este job.")
     
     # Determinar la empresa para filtrar (usar la empresa del job existente)
@@ -187,9 +196,21 @@ def editarJob(request, id):
 @permission_required('AppCrud.delete_job', raise_exception=True)
 def borrarJob(request, id):
     job = Job.objects.get(id=id)
+    usuario = request.user
+    
+    # Verificar permisos: superuser, empresa propia, o empresa administrada
+    tiene_permisos = (
+        usuario.is_superuser or 
+        (usuario.empresa and usuario.empresa == job.empresa) or
+        (hasattr(usuario, 'empresas_administradas') and 
+         usuario.empresas_administradas.filter(id=job.empresa.id).exists())
+    )
+    
+    if not tiene_permisos:
+        raise PermissionDenied("No tiene permisos para eliminar este job.")
+    
     job.delete()
     jobs = Job.objects.all()
-    usuario = request.user
     return redirect("../job/", {
         "jobs": jobs,
         "admin_perm": usuario.has_perm('AppCrud.empresa_admin')
