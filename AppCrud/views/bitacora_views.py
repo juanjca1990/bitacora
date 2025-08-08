@@ -103,10 +103,30 @@ def bitacoraForm(request, other_periodo=None):
     if request.session.get('admin') and request.session.get('empresa_actual'):
         try:
             empresa_para_filtrar = Empresa.objects.get(id=request.session.get('empresa_actual'))
+            print(f"Admin detectado - Empresa actual: {empresa_para_filtrar.nombre}")
         except Empresa.DoesNotExist:
+            print("Admin detectado pero empresa_actual no existe")
             pass
     elif usuario.empresa:
         empresa_para_filtrar = usuario.empresa
+        print(f"Usuario normal - Empresa: {empresa_para_filtrar.nombre}")
+    else:
+        print("No se pudo determinar empresa para filtrar")
+    
+    print(f"Empresa para filtrar: {empresa_para_filtrar}")
+    print(f"Session admin: {request.session.get('admin')}")
+    print(f"Session empresa_actual: {request.session.get('empresa_actual')}")
+    
+    # Verificar qué jobs están disponibles para esta empresa
+    if empresa_para_filtrar:
+        jobs_disponibles = Job.objects.filter(empresa=empresa_para_filtrar)
+        print(f"Jobs disponibles para {empresa_para_filtrar.nombre}: {jobs_disponibles.count()}")
+        for job in jobs_disponibles:
+            print(f"  - {job.nombre} ({job.empresa.nombre})")
+    else:
+        print("No hay empresa para filtrar, mostrando todos los jobs")
+        jobs_disponibles = Job.objects.all()
+        print(f"Total de jobs: {jobs_disponibles.count()}")
     
     if request.method == 'POST':
         formulario = BitacoraForm(request.POST, user=usuario, empresa_filtro=empresa_para_filtrar)
@@ -116,7 +136,7 @@ def bitacoraForm(request, other_periodo=None):
             print(info['other_periodo'])
             if info['periodo'] == 'Otro':
                 info['periodo'] = info['other_periodo']
-            info.pop('other_periodo', None)  # Remove 'other_periodo' from cleaned_data
+            info.pop('other_periodo', None)
             bitacora = Bitacora(**info)
             
             bitacora.empresa = bitacora.job.empresa
@@ -129,6 +149,11 @@ def bitacoraForm(request, other_periodo=None):
             })
     else:
         formulario = BitacoraForm(user=usuario, empresa_filtro=empresa_para_filtrar)
+        # Verificar qué jobs tiene el formulario después de crearlo
+        print(f"Jobs en el formulario: {formulario.fields['job'].queryset.count()}")
+        for job in formulario.fields['job'].queryset:
+            print(f"  - {job.nombre} ({job.empresa.nombre})")
+        
     return render(request, "AppCrud/bitacoraForm.html", {"formulario": formulario})
 
 
