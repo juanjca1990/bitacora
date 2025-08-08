@@ -1,14 +1,17 @@
 from django.urls import path
 from AppCrud.views import *
+from AppCrud.views.usuario_views import google_login, google_callback
 from django.contrib.auth.views import LogoutView
  
 
 urlpatterns = [
     
-    # INICIO Y DESLOGUEO
-    path('', inicio),
-    path('inicio/', inicio,name="inicio"),
+    # INICIO Y DESLOGUEO - Cambiar la URL raíz para que vaya directo al login
+    path('', login_request, name="home"),  # Cambio aquí
+    path('inicio/', inicio, name="inicio"),
     path('login/', login_request, name="Login"),
+    path('auth/google/', google_login, name='google_login'),
+    path('auth/google/callback/', google_callback, name='google_callback'),
     path('logout', LogoutView.as_view(template_name='AppCrud/logout.html'), name='Logout'),
     path('logout/', logout_request, name='Logout'),
     

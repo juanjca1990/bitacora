@@ -2,6 +2,10 @@ from .base_imports import *
 
 
 def inicio(request):
+    # Si el usuario no está autenticado, redirigir al login
+    if not request.user.is_authenticated:
+        return redirect('Login')
+    
     mensaje = request.GET.get('mensaje', '')
     user = request.user
     admin = 0
@@ -26,7 +30,7 @@ def inicio(request):
     else:
         request.session['admin'] = False
         request.session["bloquear_edicion"] = True
-
+    
     return render(request, "AppCrud/inicio.html", {"mensaje": mensaje, "admin": admin})
 
 def get_job_description(request):
