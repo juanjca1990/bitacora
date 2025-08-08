@@ -1,5 +1,14 @@
 from .base_imports import *
 
+import json
+import urllib.parse
+import urllib.request
+from django.conf import settings
+from google.auth.transport import requests
+from google.oauth2 import id_token
+import secrets
+from django.contrib import messages
+
 @login_required
 @permission_required('AppCrud.add_user', raise_exception=True)
 def register(request):
@@ -259,6 +268,128 @@ def login_request(request):
     else:
         form=AuthenticationForm()
         return render(request, "AppCrud/login.html", {"form": form})
+    
+def google_login(request):
+    """Initiate Google OAuth login"""
+    # Generate state parameter for security
+    state = secrets.token_urlsafe(32)
+    request.session['oauth_state'] = state
+    
+    # Google OAuth URL
+    google_auth_url = "https://accounts.google.com/o/oauth2/auth"
+    params = {
+        'client_id': settings.GOOGLE_OAUTH2_CLIENT_ID,
+        'redirect_uri': settings.GOOGLE_OAUTH2_REDIRECT_URI,
+        'scope': 'openid email profile',
+        'response_type': 'code',
+        'state': state,
+    }
+    print("params:", params)
+    
+    auth_url = f"{google_auth_url}?{urllib.parse.urlencode(params)}"
+    return redirect(auth_url)
+
+def google_callback(request):
+    """Handle Google OAuth callback"""
+    code = request.GET.get('code')
+    state = request.GET.get('state')
+    
+    # Crear el formulario para casos de error
+    form = AuthenticationForm()
+    
+    # Verify state parameter
+    if state != request.session.get('oauth_state'):
+        return render(request, "AppCrud/login.html", {
+            "form": form,
+            "mensaje": "Error de seguridad en la autenticación"
+        })
+    
+    if not code:
+        return render(request, "AppCrud/login.html", {
+            "form": form,
+            "mensaje": "Error en la autenticación con Google"
+        })
+    
+    try:
+        # Exchange code for access token
+        token_url = "https://oauth2.googleapis.com/token"
+        token_data = {
+            'client_id': settings.GOOGLE_OAUTH2_CLIENT_ID,
+            'client_secret': settings.GOOGLE_OAUTH2_CLIENT_SECRET,
+            'code': code,
+            'grant_type': 'authorization_code',
+            'redirect_uri': settings.GOOGLE_OAUTH2_REDIRECT_URI,
+        }
+        
+        token_request = urllib.request.Request(
+            token_url,
+            data=urllib.parse.urlencode(token_data).encode(),
+            headers={'Content-Type': 'application/x-www-form-urlencoded'}
+        )
+        
+        with urllib.request.urlopen(token_request) as response:
+            token_response = json.loads(response.read().decode())
+        
+        access_token = token_response.get('access_token')
+        id_token_str = token_response.get('id_token')
+        
+        if not access_token or not id_token_str:
+            return render(request, "AppCrud/login.html", {
+                "form": form,
+                "mensaje": "Error obteniendo tokens de Google"
+            })
+        
+        # Verify and decode the ID token
+        idinfo = id_token.verify_oauth2_token(
+            id_token_str, 
+            requests.Request(), 
+            settings.GOOGLE_OAUTH2_CLIENT_ID
+        )
+        
+        # Get user info from Google
+        google_user_id = idinfo.get('sub')
+        email = idinfo.get('email')
+        name = idinfo.get('name')
+        
+        if not email:
+            return render(request, "AppCrud/login.html", {
+                "form": form,
+                "mensaje": "No se pudo obtener el email de Google"
+            })
+            
+        # busco la persona con el email
+        try:
+            user = User.objects.get(email=email)
+        except User.DoesNotExist:
+            return render(request, "AppCrud/login.html", {
+                "form": form,
+                "mensaje": "El correo no está registrado en el sistema"
+            })
+        
+        # EL CORREO EXISTE, LOGEO A LA PERSONA
+        login(request, user)
+        request.session['admin'] = False
+        
+        # Clean up session
+        if 'oauth_state' in request.session:
+            del request.session['oauth_state']
+        
+        messages.success(request, f"Usuario {user.username} logueado correctamente con Google")
+        return redirect('inicio')
+        
+    except Exception as e:
+        print("ERROR DE MIERDA")
+        print(str(e))
+        if errors := getattr(e, 'errors', None):
+            error_message = errors[0].get('message', 'Error desconocido')
+            return render(request, "AppCrud/login.html", {
+                "form": form,
+                "mensaje": f"Error en la autenticación: {error_message}"
+            })
+        return render(request, "AppCrud/login.html", {
+            "form": form,
+            "mensaje": f"Error en la autenticación: {str(e)}"
+        })
 
 @login_required
 def cambiar_empresa(request):
