@@ -15,6 +15,16 @@ def register(request):
     if request.method == "POST":
         form = RegistroUsuarioForm(request.POST)
         if form.is_valid():
+            email = form.cleaned_data.get("email")
+            
+            # Verificar si el email ya está registrado
+            if User.objects.filter(email=email).exists():
+                return render(request, "AppCrud/registrarUsuario.html", {
+                    "form": form,
+                    "mensaje": "El correo electrónico ya está registrado",
+                    "tipo": "Usuario"
+                })
+            
             user = form.save(commit=False)
             usernm = form.cleaned_data.get("username")
             empresa = form.cleaned_data.get("empresa")
@@ -32,7 +42,11 @@ def register(request):
 
             return redirect('./inicio/', {"mensaje": f"Usuario {usernm} creado correctamente"})
         else:
-            return render(request, "AppCrud/registrarUsuario.html", {"form": form, "mensaje": "Error al crear el usuario", "tipo": "Usuario"})
+            return render(request, "AppCrud/registrarUsuario.html", {
+                "form": form,
+                "mensaje": "Error al crear el usuario",
+                "tipo": "Usuario"
+            })
     else:
         form = RegistroUsuarioForm()
         return render(request, "AppCrud/registrarUsuario.html", {"form": form, "tipo": "Usuario"})
