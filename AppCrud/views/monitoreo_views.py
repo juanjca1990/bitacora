@@ -390,18 +390,20 @@ def obtener_comentarios(request):
 
     return JsonResponse({"success": False, "error": "Método no permitido"})
 
+#imprimo los estados para los servidores de una empresa
+#que tienen un tipo de verificacion "fallo" o tienen un comentario realizado
 def imprimirRegistroMes(request, mes, anio, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     servidores = Servidor.objects.filter(empresa=empresa)
     registros = Registro.objects.filter(servidor__in=servidores)
 
-    # Filtrar estados with "fallo" o que tengan algún comentario (descripcion no vacía)
+    # Filtrar estados donde tipo_verificacion es "fallo" o donde hay algún comentario
     estados = Estado.objects.filter(
         registro_verificado__in=registros,
         fecha__year=anio,
         fecha__month=mes
     ).filter(
-        Q(tipo_verificacion="fallo") | (~Q(descripcion__isnull=True) & ~Q(descripcion__exact=""))
+        Q(tipo_verificacion="fallo") | (~Q(comentarios__isnull=True) & ~Q(comentarios__exact=[]))
     ).select_related('registro_verificado', 'servidor')
 
     # Ordenar por servidor, luego por registro y luego por fecha
@@ -417,20 +419,27 @@ def imprimirRegistroMes(request, mes, anio, empresa_id):
     # Título con el nombre de la empresa
     elements = [Paragraph(str(empresa.nombre), styleTitle), Spacer(1, 12)]
 
+    # Encabezados de la tabla
     data = [["Servidor", "Registro", "Descripción", "Comentario", "Estado", "Fecha"]]
 
+    # Agregar filas con datos filtrados
     for estado in estados:
+        # Obtener comentarios formateados
+        comentarios_formateados = estado.obtener_comentarios_formateados() if estado.comentarios else "Sin comentarios"
+        
         data.append([
-            estado.servidor.nombre,
-            estado.registro_verificado.nombre,
-            estado.registro_verificado.descripcion,
-            estado.descripcion or "",
-            estado.tipo_verificacion,
-            estado.fecha.strftime("%d/%m/%Y")
+            Paragraph(estado.servidor.nombre, styleN),
+            Paragraph(estado.registro_verificado.nombre, styleN),
+            Paragraph(estado.registro_verificado.descripcion or "", styleN),
+            Paragraph(comentarios_formateados, styleN),  # Mostrar comentarios formateados
+            Paragraph(estado.tipo_verificacion, styleN),
+            Paragraph(estado.fecha.strftime("%d/%m/%Y"), styleN)
         ])
 
-    table = Table(data, colWidths=[80, 80, 200, 200, 80, 80])
+    # Ajustar los anchos de las columnas
+    table = Table(data, colWidths=[100, 100, 150, 150, 80, 80])
 
+    # Aplicar estilos para la tabla
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -442,6 +451,7 @@ def imprimirRegistroMes(request, mes, anio, empresa_id):
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
         ('TOPPADDING', (0, 1), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # Asegura que el texto comience desde la parte superior
     ]))
 
     elements.append(table)
@@ -450,6 +460,8 @@ def imprimirRegistroMes(request, mes, anio, empresa_id):
     buffer.seek(0)
     return FileResponse(buffer, as_attachment=True, filename=f"Registro_{mes}_{anio}.pdf")
 
+
+# imprimo todos los estados del mes de los servidores para una empresa
 def imprimirRegistroMesCompleto(request, mes, anio, empresa_id):
     empresa = get_object_or_404(Empresa, id=empresa_id)
     servidores = Servidor.objects.filter(empresa=empresa)
@@ -475,20 +487,27 @@ def imprimirRegistroMesCompleto(request, mes, anio, empresa_id):
     # Título con el nombre de la empresa
     elements = [Paragraph(f"Registro Completo - {empresa.nombre}", styleTitle), Spacer(1, 12)]
 
+    # Encabezados de la tabla
     data = [["Servidor", "Registro", "Descripción", "Comentario", "Estado", "Fecha"]]
 
+    # Agregar filas con datos
     for estado in estados:
+        # Obtener comentarios formateados
+        comentarios_formateados = estado.obtener_comentarios_formateados() if estado.comentarios else "Sin comentarios"
+        
         data.append([
-            estado.servidor.nombre,
-            estado.registro_verificado.nombre,
-            estado.registro_verificado.descripcion,
-            estado.descripcion or "",
-            estado.tipo_verificacion,
-            estado.fecha.strftime("%d/%m/%Y")
+            Paragraph(estado.servidor.nombre, styleN),
+            Paragraph(estado.registro_verificado.nombre, styleN),
+            Paragraph(estado.registro_verificado.descripcion or "", styleN),
+            Paragraph(comentarios_formateados, styleN),  # Mostrar comentarios formateados
+            Paragraph(estado.tipo_verificacion, styleN),
+            Paragraph(estado.fecha.strftime("%d/%m/%Y"), styleN)
         ])
 
-    table = Table(data, colWidths=[80, 80, 200, 200, 80, 80])
+    # Ajustar los anchos de las columnas
+    table = Table(data, colWidths=[100, 100, 150, 150, 80, 80])
 
+    # Aplicar estilos para la tabla
     table.setStyle(TableStyle([
         ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
         ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
@@ -500,6 +519,7 @@ def imprimirRegistroMesCompleto(request, mes, anio, empresa_id):
         ('FONTNAME', (0, 1), (-1, -1), 'Helvetica'),
         ('TOPPADDING', (0, 1), (-1, -1), 6),
         ('BOTTOMPADDING', (0, 1), (-1, -1), 6),
+        ('VALIGN', (0, 0), (-1, -1), 'TOP'),  # Asegura que el texto comience desde la parte superior
     ]))
 
     elements.append(table)
