@@ -87,7 +87,6 @@ class Estado(models.Model):
                     comentarios_texto.append(f"[{usuario}]: {texto}")
             else:
                 comentarios_texto.append(f"[{usuario}]: {texto}")
-        
         return "\n".join(comentarios_texto)
     
     def migrar_descripcion_a_comentarios(self):

@@ -36,11 +36,11 @@
             <div class="nav-referencia-estados" style="margin-bottom: 10px;">
                 
                 <a href="{% url 'imprimirRegistroMes' mes_actual anio_actual empresa.id %}" class="btn-mes-navegacion btn-icon-only" style="margin-left: 10px;" title="Imprimir Fallos">
-                    <i class="fas fa-print" style="color: #ffffff;"></i>
+                    <i class="fas fa-download" style="color: #ffffff; margin-right: 5px;"></i><i class="fa-regular fa-xmark" style="width: 5px; height: 5px; color: #ffffff;"></i>
                 </a>
                 
                 <a href="{% url 'imprimirRegistroMesCompleto' mes_actual anio_actual empresa.id %}" class="btn-mes-navegacion btn-icon-only" style="margin-left: 10px;" title="Imprimir Completo">
-                    <i class="fas fa-file-pdf" style="color: #ffffff;"></i>
+                    <i class="fas fa-download" style="color: #ffffff;margin-right: 5px;"></i><i class="fa-regular fa-plus" style="width: 5px; height: 5px; color: #ffffff;"></i>
                 </a>
 
                 {% if user.is_staff or user.is_superuser %}
@@ -521,6 +521,9 @@
 
 <style>
 
+    a{
+        text-decoration-line: none !important;
+    }
     
     label, span, h1, h2, h3, h4, h5, h6 {
         color: {{ empresa.visual_empresa.colorPrimario }} !important;
