@@ -11,48 +11,6 @@ from django.contrib import messages
 
 @login_required
 @permission_required('AppCrud.add_user', raise_exception=True)
-def register(request):
-    if request.method == "POST":
-        form = RegistroUsuarioForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data.get("email")
-            
-            # Verificar si el email ya está registrado
-            if User.objects.filter(email=email).exists():
-                return render(request, "AppCrud/registrarUsuario.html", {
-                    "form": form,
-                    "mensaje": "El correo electrónico ya está registrado",
-                    "tipo": "Usuario"
-                })
-            
-            user = form.save(commit=False)
-            usernm = form.cleaned_data.get("username")
-            empresa = form.cleaned_data.get("empresa")
-
-            # Asignar empresa solo si no es superusuario
-            if not user.is_superuser:
-                user.empresa = empresa
-
-            user.save()
-
-            # Asignar grupo según la empresa
-            if empresa:
-                group = Group.objects.get(name=empresa)
-                user.groups.add(group)
-
-            return redirect('./inicio/', {"mensaje": f"Usuario {usernm} creado correctamente"})
-        else:
-            return render(request, "AppCrud/registrarUsuario.html", {
-                "form": form,
-                "mensaje": "Error al crear el usuario",
-                "tipo": "Usuario"
-            })
-    else:
-        form = RegistroUsuarioForm()
-        return render(request, "AppCrud/registrarUsuario.html", {"form": form, "tipo": "Usuario"})
-
-@login_required
-@permission_required('AppCrud.add_user', raise_exception=True)
 def registerOption(request):
     usuario = request.user
     return render(request, "AppCrud/registroUserOpcion.html", {"user": usuario})
@@ -290,6 +248,7 @@ def login_request(request):
             usuario=authenticate(username=usu, password=clave)
             if usuario is not None:
                 login(request, usuario)
+                cambiar_empresa(request)
                 return redirect('../inicio/', {"mensaje":f"Usuario {usu} logueado correctamente"})
             else:
                 return render(request, "AppCrud/login.html", {"form": form, "mensaje":"Usuario o contraseña incorrectos"})
@@ -426,6 +385,17 @@ def cambiar_empresa(request):
     if request.method == "POST":
         print("Cambiando empresa. es un post..")
         empresa_id = request.POST.get("empresa_id")
+        
+        # Si empresa_id es None, tomar la primera empresa asignada al usuario
+        if not empresa_id:
+            empresas_asignadas = request.user.empresas_administradas.all()
+            if empresas_asignadas.exists():
+                empresa_id = empresas_asignadas.first().id
+                print(f"No se proporcionó empresa_id. Asignando la primera empresa: {empresa_id}")
+            else:
+                print("El usuario no tiene empresas asignadas.")
+                return redirect('inicio')  # Redirigir si no hay empresas asignadas
+        
         print("la empresa es : ", empresa_id)
         try:
             nueva_empresa = Empresa.objects.get(id=empresa_id)
@@ -502,12 +472,18 @@ def listaAdministradoresEmpresa(request, empresa_id):
     })
 
 @login_required
-def register_user_vista_admin(request, empresa_id):
-    empresa = get_object_or_404(Empresa, id=empresa_id)
-    
+@permission_required('AppCrud.add_user', raise_exception=True)
+def RegistrarUsuario(request):
+    #si es el admin que ingresa primero el campo esta vacio
+    if 'empresa_actual' not in request.session:
+        empresa = Empresa.objects.first()  # obtengo la primer empresa si es admin el que ingreso
+    else:
+        empresa = request.session['empresa_actual']
+        empresa = get_object_or_404(Empresa, id=empresa)
+    print("empresa actual:", empresa)
     if request.method == "POST":
         form = RegistroUsuarioForm(request.POST)
-        # Remove empresa field since it's automatically assigned
+        # Remove el campo de seleccion de empresa
         if 'empresa' in form.fields:
             del form.fields['empresa']
             
