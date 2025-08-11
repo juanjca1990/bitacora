@@ -4,7 +4,6 @@ import os
 from dotenv import load_dotenv
 from paramiko import SSHClient, AutoAddPolicy
 import psycopg2
-from psycopg2.extras import RealDictCursor
 
 def registrar_estado_tool(registro_id: int, fecha: str, tipo_verificacion: str, servidor_id: int, empresa_id: int) -> str:
     """

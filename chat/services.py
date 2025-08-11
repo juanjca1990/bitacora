@@ -4,6 +4,7 @@ from google import genai
 from google.genai import types
 from chat.tools_gemini import get_tools
 from chat.tools_openai import functions
+from chat.tools_odata import get_tools_sap
 import openai
 
 load_dotenv()
@@ -20,6 +21,8 @@ def gemini_generate(user_input):
         ),
     ]
     tools = get_tools()
+    tools += get_tools_sap()
+    
     generate_content_config = types.GenerateContentConfig(
         thinking_config=types.ThinkingConfig(thinking_budget=-1),
         tools=tools,
@@ -55,6 +58,9 @@ def process_message(data):
     deberia registrar transaccion "AN78" y de descripcion "encargada de generar los repartos de abastecimiento".
     - No incluir razonamiento en la respuesta, solo muy basico y referido a los datos
     - si pregunta sobre estado de un servidor puntutal o sobre una base de datos si retornar un mensaje que de un razonamiento y haga un reporte tecnico/funcional
+    - En caso de que me diga algo como "Obtener orden de compra 10248" se refiere a que 10248 es el orden id
+    - Tengo una funcion que obtiene las órdenes de compra cuyo precio total sea mayor a un valor dado dolares
+    - formatear siempre las respuestas para que se vean visualmente comodas
     """
     user_message = f"{reglas}\n{user_message}"
     provider = data.get('provider', 'gemini')
