@@ -28,6 +28,7 @@ urlpatterns = [
     path('editarAviso/<id>', editarAviso, name="editarAviso"),
     path('borrarAviso/<id>', borrarAviso, name="borrarAviso"),
     path('avisar/<id>', avisar, name='avisar'),
+    path('exportar_avisos_pdf/', exportar_avisos_pdf, name='exportar_avisos_pdf'),
 
     # CONTACTOS
     path('contacto/', contacto,name="contacto"),

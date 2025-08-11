@@ -41,11 +41,14 @@
                 </tbody>
             </table>
         </div>
-        {% if admin_perm %}
-            <a href="{% url 'AvisoForm' %}" type="button" class="btn-corporativo mt-2">Agregar aviso</a>
-        {% endif %}
-    </div>
-
+            {% if admin_perm %}
+                <a href="{% url 'AvisoForm' %}" type="button" class="btn-corporativo mt-2">Agregar aviso</a>
+            {% endif %}
+                <a href="{% url 'exportar_avisos_pdf' %}" type="button" class="btn-corporativo mt-2" title="Imprimir avisos">
+                    <i class="fas fa-download" style="color: #ebebeb; margin-right: 5px;"></i>
+                </a>
+        </div>
+        
         <style>
         /* Estilos corporativos para tablas */
         .table-corporativa thead th {

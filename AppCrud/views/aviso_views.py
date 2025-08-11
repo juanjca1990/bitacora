@@ -1,6 +1,12 @@
 from .base_imports import *
 from django.contrib import messages
 from django.core.mail import send_mail
+from reportlab.lib.pagesizes import letter, landscape
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet
+from django.http import FileResponse
+import io
 
 
 @login_required
@@ -226,3 +232,62 @@ def avisar(request, id):
             'form': form, 
             "nombres": nombres_string
         })
+
+
+@login_required
+@permission_required('AppCrud.view_aviso', raise_exception=True)
+def exportar_avisos_pdf(request):
+    # Crear un buffer para el PDF
+    buffer = io.BytesIO()
+
+    # Configurar el documento PDF
+    pdf = SimpleDocTemplate(buffer, pagesize=landscape(letter))
+    styles = getSampleStyleSheet()
+    styleN = styles["Normal"]
+    styleTitle = styles["Title"]
+
+    # Título del PDF
+    elements = [Paragraph("Lista de Avisos", styleTitle)]
+
+    # Obtener los datos de los avisos
+    usuario = request.user
+    if usuario.is_superuser:
+        avisos = Aviso.objects.all()
+    elif usuario.empresa:
+        avisos = Aviso.objects.filter(empresa=usuario.empresa)
+    else:
+        avisos = Aviso.objects.none()
+
+    # Crear la tabla de datos
+    data = [["Empresa", "Ambiente", "Hora Inicio", "Job", "Contacto"]]
+    for aviso in avisos:
+        data.append([
+            Paragraph(aviso.empresa.nombre, styleN),
+            Paragraph(aviso.ambiente, styleN),
+            # Paragraph(aviso.inicio.strftime("%H:%M"), styleN),
+            Paragraph(aviso.inicio, styleN),
+            Paragraph(aviso.job.nombre, styleN),
+            Paragraph(aviso.contacto.nombre, styleN)
+        ])
+
+    # Estilo de la tabla
+        # Ajustar los anchos de las columnas
+    table = Table(data, colWidths=[100, 100, 150, 150, 80])
+    # table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+        ('GRID', (0, 0), (-1, -1), 1, colors.black),
+    ]))
+
+    elements.append(table)
+
+    # Construir el PDF
+    pdf.build(elements)
+
+    # Retornar el archivo PDF como respuesta
+    buffer.seek(0)
+    return FileResponse(buffer, as_attachment=True, filename="avisos.pdf")
