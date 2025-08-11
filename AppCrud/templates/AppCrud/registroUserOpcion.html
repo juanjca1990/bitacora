@@ -7,7 +7,7 @@
                 {% if user.is_superuser %}
                 <div class="text-center">
                     <h4 class="mb-4">Registrar Usuario</h4>
-                    <a href="{% url 'Register'  %}" class="btn btn-primary"><i class="fas fa-user-plus mr-2"></i>Registrar</a>
+                    <a href="{% url 'RegistrarUsuario'  %}" class="btn btn-primary"><i class="fas fa-user-plus mr-2"></i>Registrar</a>
                 </div>
                 <div class="text-center mt-4">
                     <h4 class="mb-4">Registrar Administrador de Empresa</h4>
@@ -16,7 +16,7 @@
                 {% else %}
                 <div class="text-center">
                     <h4 class="mb-4">Registrar Usuario</h4>
-                    <a href="{% url 'Register_user_vista_admin' user.empresa.id  %}" class="btn btn-primary"><i class="fas fa-user-plus mr-2"></i>Registrar</a>
+                    <a href="{% url 'RegistrarUsuario'%}" class="btn btn-primary"><i class="fas fa-user-plus mr-2"></i>Registrar</a>
                 </div>
                 {% endif %}
             </div>
