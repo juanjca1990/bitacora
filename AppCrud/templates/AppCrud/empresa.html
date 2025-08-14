@@ -33,14 +33,59 @@
                 </tbody>
             </table>
         </div>
+        
+        <!-- Paginación -->
+        {% if empresas.paginator.num_pages > 1 %}
+            <nav aria-label="Paginación de empresas">
+                <ul class="pagination justify-content-center">
+                    {% if empresas.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1" aria-label="Primera página">
+                                <i class="fas fa-angle-double-left"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ empresas.previous_page_number }}" aria-label="Página anterior">
+                                <i class="fas fa-angle-left"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                    
+                    <!-- Números de página -->
+                    {% for num in empresas.paginator.page_range %}
+                        {% if empresas.number == num %}
+                            <li class="page-item active">
+                                <span class="page-link">{{ num }}</span>
+                            </li>
+                        {% else %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ num }}">{{ num }}</a>
+                            </li>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    {% if empresas.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ empresas.next_page_number }}" aria-label="Página siguiente">
+                                <i class="fas fa-angle-right"></i>
+                            </a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ empresas.paginator.num_pages }}" aria-label="Última página">
+                                <i class="fas fa-angle-double-right"></i>
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        {% endif %}
+        
         {% if empresa_admin %}
             <a href="{% url 'EmpresaForm' %}" type="button" class="btn-corporativo mt-2">Agregar empresa</a>
         {% endif %}
     </div>
 
-
-       <style>
-
+    <style>
         label,span,h1,h2,h3,h4,h5,h6 {
             color: {{ empresa_actual.visual_empresa.colorPrimario }} !important;
         }

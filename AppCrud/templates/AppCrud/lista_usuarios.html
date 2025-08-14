@@ -57,14 +57,14 @@
                                     <a href="{% url 'editar_usuario' user.id %}" 
                                        class="btn btn-sm btn-outline-primary" 
                                        title="Editar usuario">
-                                        <i class="fas fa-edit">editar</i>
+                                        <i class="fas fa-edit"></i>
                                     </a>
                                 {% endif %}
                                 {% if perms.AppCrud.delete_user and not user.is_superuser and not user.empresas_administradas.exists %}
                                     <a href="{% url 'eliminar_usuario' user.id %}" 
                                        class="btn btn-sm btn-outline-danger" 
                                        title="Eliminar usuario">
-                                        <i class="fas fa-trash">eliminar</i>
+                                        <i class="fas fa-trash"></i>
                                     </a>
                                 {% endif %}
                             </div>
