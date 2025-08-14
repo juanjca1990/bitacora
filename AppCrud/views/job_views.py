@@ -64,7 +64,7 @@ def job(request):
     for empresa, jobs in jobs_by_empresa.items():
         # Add explicit ordering to avoid pagination warning
         jobs = jobs.order_by('id')
-        paginator = Paginator(jobs, 20)
+        paginator = Paginator(jobs, 10)
         page_number = request.GET.get('page{}'.format(table_number), 1)
         page_obj = paginator.get_page(page_number)
         paginated_jobs[empresa] = page_obj

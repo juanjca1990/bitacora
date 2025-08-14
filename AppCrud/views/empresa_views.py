@@ -13,6 +13,14 @@ def empresa(request):
     if request.session.get('admin'):
         empresas = filtrar_empresas(request, empresas)
     
+    # Add explicit ordering to avoid pagination warning
+    empresas = empresas.order_by('id')
+    
+    # Implementar paginación
+    paginator = Paginator(empresas, 10)
+    page_number = request.GET.get('page')
+    empresas_paginadas = paginator.get_page(page_number)
+    
     # Obtener todas las empresas disponibles para el dropdown de cambio de empresa
     if request.session.get('admin'):
         if usuario.is_superuser:
@@ -37,7 +45,7 @@ def empresa(request):
         empresa_actual = usuario.empresa
     
     return render(request, "AppCrud/empresa.html", {
-        "empresas": empresas,
+        "empresas": empresas_paginadas,
         "empresa_admin": usuario.has_perm('AppCrud.empresa_admin'),
         "todas_empresas": todas_empresas,
         "empresa_actual": empresa_actual
