@@ -43,6 +43,10 @@
                     <i class="fas fa-download" style="color: #ffffff;margin-right: 5px;"></i><i class="fa-regular fa-plus" style="width: 5px; height: 5px; color: #ffffff;"></i>
                 </a>
 
+                <a href="{% url 'imprimirRegistroDia' empresa.id %}" class="btn-mes-navegacion btn-icon-only" style="margin-left: 10px;" title="Imprimir Día Actual">
+                    <i class="fas fa-download" style="color: #ffffff; margin-right: 5px;"></i></i>
+                </a>
+
                 {% if user.is_staff or user.is_superuser %}
                     <a href="{% url 'habilitar_deshabilitar_edicion' %}?fecha={{ fecha_actual|date:'Y-m-d' }}{% if servidor_id %}&servidor_id={{ servidor_id }}{% endif %}" class="btn-mes-navegacion btn-icon-only" style="margin-left: 10px;" title="Habilitar/Deshabilitar edición" onclick="guardarPosicionScroll()">
                         <i class="fas fa-edit" style="color: #ffffff;"></i>
