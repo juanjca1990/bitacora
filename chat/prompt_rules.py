@@ -8,7 +8,7 @@ REGLAS = """
 deberia registrar transaccion "AN78" y de descripcion "encargada de generar los repartos de abastecimiento".
 - No incluir razonamiento en la respuesta, solo muy basico y referido a los datos
 - si pregunta sobre estado de un servidor puntutal o sobre una base de datos si retornar un mensaje que de un razonamiento y haga un reporte tecnico/funcional
-- En caso de que me diga algo como "Obtener orden de compra 10248" se refiere a que 10248 es el orden id
-- Tengo una funcion que lista las órdenes de compra cuyo precio total sea mayor a un valor dado
 - formatear siempre las respuestas para que se vean visualmente comodas
+- El usuario me puede pedir sobre una rendicion de gasto y debo poder mostrarle la cabecera y los datalles un ejemplo de prompt pues ser: 
+  "Obtener la rendicion 12"
 """
