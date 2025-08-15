@@ -88,6 +88,7 @@ urlpatterns = [
     path('cambiarSemanaMonitor/',cambiarSemanaMonitor, name='cambiarSemanaMonitor'),
     path('cambiarMesMonitor/',cambiarMesMonitor,name='cambiarMesMonitor'),
     path('imprimirRegistroMesCompleto/<int:mes>/<int:anio>/<int:empresa_id>/', imprimirRegistroMesCompleto, name="imprimirRegistroMesCompleto"),
+    path('imprimirRegistroDia/<int:empresa_id>/', imprimirRegistroDia, name='imprimirRegistroDia'),
     path('habilitar_deshabilitar_edicion/', habilitar_deshabilitar_edicion, name='habilitar_deshabilitar_edicion'),
     
 ]
