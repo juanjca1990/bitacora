@@ -1,66 +1,76 @@
+import os
 import pyodata
 import requests
+from dotenv import load_dotenv
 
-def obtener_orden_de_compra(orden_id: int) -> dict:
+# Cargar variables de entorno
+load_dotenv()
+
+# URL y credenciales del servicio OData
+ODATA_URL = os.getenv('RENDICION_ODATA_URL')
+ODATA_USER = os.getenv('RENDICION_ODATA_USER')
+ODATA_PASS = os.getenv('RENDICION_ODATA_PASS')
+
+def obtener_rendicion_por_id(rend_id: int) -> dict:
     """
-    Obtiene una orden de compra específica por su numero de ID.
+    Obtiene una rendición específica por su ID.
 
-    orden_id: ID de la orden de compra.
-    return: Detalles de la orden de compra.
+    rend_id: ID de la rendición.
+    return: Detalles de la rendición.
     """
     try:
-        # Inicializar el cliente OData
+        # Inicializar el cliente OData con autenticación
         session = requests.Session()
-        client = pyodata.Client('https://services.odata.org/V2/Northwind/Northwind.svc/', session)
+        session.auth = (ODATA_USER, ODATA_PASS)
+        client = pyodata.Client(ODATA_URL, session)
 
-        # Obtener la orden de compra
-        orden = client.entity_sets.Orders.get_entity(orden_id).execute()
+        # Obtener la rendición
+        rendicion = client.entity_sets.RendHeaderSet.get_entity(rend_id).execute()
         return {
-            "OrdenID": orden.OrderID,
-            "ClienteID": orden.CustomerID,
-            "FechaOrden": orden.OrderDate,
-            "NombreEnvio": orden.ShipName,
-            "PaisEnvio": orden.ShipCountry,
+            "RendId": rendicion.RendId,
+            "VendorFfName": rendicion.VendorFfName,
+            "Type": rendicion.Type,
+            "TypeText": rendicion.TypeText,
+            "CompanyCode": rendicion.CompanyCode,
+            "DocumentNumber": rendicion.DocumentNumber,
+            "FiscalYear": rendicion.FiscalYear,
+            "CreationDate": rendicion.CreationDate,
+            "RendStatus": rendicion.RendStatus,
+            "RendStatusText": rendicion.RendStatusText,
         }
     except Exception as e:
         return {"error": str(e)}
 
-def obtener_ordenes_con_precio_mayor_a(precio_minimo: float) -> list:
+def listar_rendiciones(limit: int = 10) -> list:
     """
-    Obtiene las órdenes de compra cuyo precio total sea mayor a un valor dado.
+    Listar las rendiciones disponibles limitando la cantidad a lo que determine el usuario mediante limit
 
-    precio_minimo: Precio mínimo total de la orden.
-    return: Lista de órdenes que cumplen la condición.
+    limit: Número máximo de rendiciones a devolver.
+    return: Lista de rendiciones.
     """
     try:
+        # Inicializar el cliente OData con autenticación
         session = requests.Session()
-        client = pyodata.Client('https://services.odata.org/V2/Northwind/Northwind.svc/', session)
+        session.auth = (ODATA_USER, ODATA_PASS)
+        client = pyodata.Client(ODATA_URL, session)
 
-        # Traer todas las órdenes
-        ordenes = client.entity_sets.Orders.get_entities().execute()
+        # Obtener las rendiciones
+        rendiciones = client.entity_sets.RendHeaderSet.get_entities().top(limit).execute()
         resultado = []
-
-        for orden in ordenes:
-            # Obtener los detalles de la orden para calcular el total
-            detalles = client.entity_sets.Order_Details.get_entities().filter(f"OrderID eq {orden.OrderID}").execute()
-            total = sum(float(detalle.UnitPrice) * int(detalle.Quantity) for detalle in detalles)
-
-            # Verificar si el total es mayor al precio mínimo
-            if total > precio_minimo:
-                resultado.append({
-                    "OrdenID": orden.OrderID,
-                    "ClienteID": orden.CustomerID,
-                    "FechaOrden": orden.OrderDate,
-                    "Total": total,
-                    "NombreEnvio": orden.ShipName,
-                    "PaisEnvio": orden.ShipCountry,
-                })
-
+        for rendicion in rendiciones:
+            resultado.append({
+                "RendId": rendicion.RendId,
+                "VendorFfName": rendicion.VendorFfName,
+                "Type": rendicion.Type,
+                "CompanyCode": rendicion.CompanyCode,
+                "DocumentNumber": rendicion.DocumentNumber,
+                "FiscalYear": rendicion.FiscalYear,
+            })
+        print(f"Total rendiciones obtenidas: {len(resultado)}")
+        print(f"Rendiciones: {resultado}")
         return resultado
-
     except Exception as e:
         return {"error": str(e)}
-
 
 def get_tools_sap():
     """
@@ -70,6 +80,6 @@ def get_tools_sap():
         list: Lista de herramientas disponibles.
     """
     return [
-        obtener_orden_de_compra,
-        obtener_ordenes_con_precio_mayor_a
+        obtener_rendicion_por_id,
+        listar_rendiciones,
     ]
